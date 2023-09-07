@@ -10,8 +10,11 @@
 [rewrite_local]
 
 ^http:\/\/api\.love\.823123\.com\/facades\/account\.show$ url script-response-body https://raw.githubusercontent.com/wf021325/qx/master/js/lxy.js
-# http://api.love.823123.com/facades/account.show url script-response-body http://192.168.2.170:8080/lxy.js
+^http:\/\/api\.love\.823123\.com\/facades\/open\.chat_stream url script-request-header  https://raw.githubusercontent.com/wf021325/qx/master/js/lxytk.js
 
+
+# http://api.love.823123.com/facades/account.show url script-response-body http://192.168.2.170:8080/lxy.js
+# http://api.love.823123.com/facades/open.chat_stream url script-request-header  http://192.168.2.170:8080/lxytk.js
 
 [mitm]
 hostname  = api.love.823123.com
