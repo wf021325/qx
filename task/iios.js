@@ -1,5 +1,5 @@
 /*
-www.iios.fun签到网页版+看视频，每日获得3积分
+www.iios.fun签到+看视频，每日获得4积分
 仅测试qx，青龙，理论上支持其他同类型软件，具体请自测
 
 
@@ -26,20 +26,14 @@ const _key = 'iios_Val';
 $.Authorization = $.getdata(_key) || ($.isNode() ? process.env[_key] : '');
 $.is_debug = ($.isNode() ? process.env.IS_DEDUG : $.getdata('is_debug')) || 'false'; //false-true
 const notify = $.isNode() ? require('./sendNotify') : '';
-var message = '';
+var message = '', huihuiType = '', aeskey = '';
 !(async() => {
-    if (typeof $request != "undefined") {
-        getToken();
-        return;
-    }
+    if (typeof $request != "undefined") {getToken();return;}
     intrsa();
     intaes();
     message += `----------iios签到----------\n`;
-    huihuiType = '2';
-    await signIn();
-    huihuiType = '3'
-        await signIn();
-
+    huihuiType = '2', await signIn();
+    huihuiType = '3', await signIn();
     console.log(message); //node,青龙日志
     await SendMsg(message);
 })()
@@ -54,6 +48,7 @@ function getToken() {
     headers = $request.headers
         if (headers.hasOwnProperty("Authorization")) {
             $.setdata(headers['Authorization'], _key);
+			console.log('获取Authorization成功🎉\n' + headers['Authorization'])
             $.msg($.name, '获取Authorization成功🎉', headers['Authorization']);
         }
 }
@@ -61,38 +56,28 @@ function getKey() {
     for (var n = arguments.length > 0 && void 0 !== arguments[0] ? arguments[0] : 16, t = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789", r = ""; r.length < n;) r += t.charAt(Math.random() * t.length);
     return r
 }
-function getHeaders(Sign) {
-    return {
-        'Content-Type': 'text/plain',
-        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0.0 Mobile/15E148 Safari/604.1',
-        'Sign': Sign,
-        'Authorization': $.Authorization
-    }
-}
-
 function signIn() {
     return new Promise((resove) => {
         aeskey = getKey();
-        Sign = RSA_Public_Encrypt(aeskey);
-        url = url = 'https://www.iios.fun/api/task';
-        body = `{"type":${huihuiType}}`
-            body = AES_Encrypt(body, aeskey);
-        headers = getHeaders(Sign);
         const rest = {
-            url: url,
-            body: body,
-            headers: headers
+            url: 'https://www.iios.fun/api/task',
+            body: AES_Encrypt(`{"type":${huihuiType},"webapp":true}`, aeskey),
+            headers: {
+                'Content-Type': 'text/plain',
+                'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0.0 Mobile/15E148 Safari/604.1',
+                'Sign': RSA_Public_Encrypt(aeskey),
+                'Authorization': $.Authorization
+            }
         };
         $.post(rest, (err, resp, data) => {
             try {
-                //debug("resp："+data)
                 data = AES_Decrypt(data, aeskey)
                     //debug("resp："+data)
                     var obj = JSON.parse(data);
                 if (obj?.success == true) {
-                    message += `签到类型${huihuiType}:签到成功,获取${obj.result.points}个积分\n`;
+                    message += `签到类型${huihuiType}:签到成功,获取${obj?.result.points}个积分\n`;
                 } else {
-                    message += `签到类型${huihuiType}:${obj.message}\n`;
+                    message += `签到类型${huihuiType}:${obj?.message}\n`;
                 }
             } catch (e) {
                 $.logErr(e, "❌请重新登陆更新Authorization");
