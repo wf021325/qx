@@ -1,0 +1,30 @@
+hostname = asia-east2-slidebox-ios-prod.cloudfunctions.net  , *.wtzw.com , ap*.intsig.net , restore-access.indream.app , *.cyapi.cn
+
+# >>> slidebox
+#hostname = asia-east2-slidebox-ios-prod.cloudfunctions.net
+^https?:\/\/asia-east2-slidebox-ios-prod\.cloudfunctions\.net\/api_v1$ url script-response-body https://raw.githubusercontent.com/wf021325/qx/master/js/slidebox.js
+
+# >>> 七猫小说
+# hostname = *.wtzw.com
+# ^https:\/\/api-cfg\.wtzw\.com\/v\d\/\w+\/index\?ad_unit_id= url reject-dict
+^https?:\/\/(api-\w+|xiaoshuo)\.wtzw\.com\/api\/v\d\/ url script-response-body https://raw.githubusercontent.com/wf021325/qx/master/js/qimao.js
+
+# >>> 扫描全能王
+# hostname = ap*.intsig.net
+^https?:\/\/api(|-cs)\.intsig\.net\/purchase\/cs\/query_property\? url script-response-body https://raw.githubusercontent.com/wf021325/qx/master/js/CamScanner.js
+
+# >>> Nicegram
+# hostname = restore-access.indream.app
+^https?:\/\/restore-access\.indream\.app\/restoreAccess\?id=\d{5,10} url script-echo-response https://raw.githubusercontent.com/wf021325/qx/master/js/Nicegram.js
+
+# >>> 彩云天气
+# hostname = *.cyapi.cn
+# 普通版广告
+^https:\/\/ad\.cyapi\.cn\/v2\/req\?app_name=weather url reject-dict
+# 赏叶赏花
+^https:\/\/wrapper\.cyapi\.cn\/v1\/activity\?app_name=weather url script-response-body https://raw.githubusercontent.com/wf021325/qx/master/js/caiyun.js
+# 解锁vip
+^https:\/\/biz\.cyapi\.cn\/v2\/user url script-response-body https://raw.githubusercontent.com/wf021325/qx/master/js/caiyun.js
+# 卫星云图 48小时预报
+^https:\/\/wrapper\.cyapi\.cn\/v1\/(satellite|nafp\/origin_images) url script-request-header https://raw.githubusercontent.com/wf021325/qx/master/js/caiyun.js
+
