@@ -36,11 +36,12 @@ var message = '', huihuiType = '';
     intrsa();
     intaes();
     message += `----------iios签到----------\n`;
-    huihuiType = '2',
+/*     huihuiType = '2',
     await signIn();
     huihuiType = '3',
     await signIn();
-    console.log(message); //node,青龙日志
+    console.log(message); //node,青龙日志 */
+	message = '网站更新，脚本失效\n暂时无解，感谢使用\n@wangfei021325';
     await SendMsg(message);
 })()
 .catch((e) => {
