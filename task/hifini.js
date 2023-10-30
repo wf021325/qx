@@ -1,10 +1,38 @@
 /*
-# hifini 签到
-仅测试QX，node,青龙
 
-^https:\/\/www\.hifini\.com\/$ url script-request-header https://raw.githubusercontent.com/wf021325/qx/master/task/hifini.js
+ * 脚本名称：hifini签到
+ * 签到入口：https://www.hifini.com
+ * 获取Cookie：手机端登录后回到首页脚本会自动获取cookie，未登录获取到的Cookie无效。青龙面板自己解决Cookie。
+ * 青龙面板：环境变量 【hifini_KEY】
+ * Cookie示例：【bbs_token=xxxxxxxx】cookie包含有bbs_token=就行，有多余的也无所谓
+------------------ Surge/Shadowrocket 配置 -----------------
+[MITM]
+hostname = hifini.com, www.hifini.com
 
-hostname = www.hifini.com
+[Script]
+hifini取Cookie = type=http-request,pattern=^https:\/\/.*hifini\.com\/$,requires-body=0,max-size=0,script-path=https://raw.githubusercontent.com/wf021325/qx/master/task/hifini.js
+
+hifini签到 = type=cron,cronexp=1 0 * * *,timeout=500,script-path=https://raw.githubusercontent.com/wf021325/qx/master/task/hifini.js,script-update-interval=0
+
+------------------ Loon 配置 ------------------
+[MITM]
+hostname = hifini.com, www.hifini.com
+
+[Script]
+http-request ^https:\/\/.*hifini\.com\/$ tag=hifini取Cookie, script-path=https://raw.githubusercontent.com/wf021325/qx/master/task/hifini.js,requires-body=0
+
+cron "1 0 * * *" script-path=https://raw.githubusercontent.com/wf021325/qx/master/task/hifini.js,tag = hifini签到,enable=true
+
+-------------- Quantumult X 配置 --------------
+[MITM]
+hostname = hifini.com, www.hifini.com
+
+[rewrite_local]
+^https:\/\/.*hifini\.com\/$ url script-request-header https://raw.githubusercontent.com/wf021325/qx/master/task/hifini.js
+
+[task_local]
+1 0 * * * https://raw.githubusercontent.com/wf021325/qx/master/task/hifini.js, tag=hifini签到, enabled=true
+
 
  */
 const $ = new Env("hifini");
@@ -36,9 +64,13 @@ var message = "";
 
 function getCookie() {
     if ($request.method = 'GET') {
-        let Cookie = $request.headers.Cookie;
-        $.setdata(Cookie, _key);
-        $.msg($.name, '获取Cookie成功🎉', Cookie);
+        let Cookie = $request.headers.Cookie || $request.headers.cookie;
+		if(Cookie){
+			$.setdata(Cookie, _key);
+			$.msg($.name, '获取Cookie成功🎉', Cookie);
+		} else {
+			$.msg($.name, "", "错误获取签到Cookie失败");
+		}
     }
 }
 
