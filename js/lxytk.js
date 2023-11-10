@@ -6,31 +6,35 @@
 const $ = new Env("lxytk")
 
 int();
-const url = `http://api.love.823123.com/facades/auth.login.guest`;
+
+const url = 'http://api.love.823123.com/facades/auth.login.guest';
 const headers = {
-    'Content-Type': `application/x-www-form-urlencoded`,
-    'Authorization': ``,
-    'User-Agent': `LianBang/2.0.1 (iPhone; iOS 15.6.1; Scale/2.00)`,
-    'net': `Wifi`,
-    'x-requested-with': `XMLHttpRequest`
+    'Content-Type': 'application/x-www-form-urlencoded',
+    'Authorization': '',
+    'User-Agent': 'LianBang/2.2.0 (iPhone; iOS 15.6.1; Scale/2.00)',
+    'net': 'Wifi',
+    'x-requested-with': 'XMLHttpRequest'
 };
-const body = 'device%5Bidentifier%5D='+guid()+'&device%5Bis_speed%5D=1&device%5Bname%5D=iPhone&device%5Bplatform%5D=0&gander=1&source=App%20store&version=v2.0.0';
-const myRequest = {url: url,method: 'POST',headers: headers,body: body};
-$task.fetch(myRequest).then(response => {
-	var obj = JSON.parse(response.body);
-    var data = B64_Decrypt(obj.data);
-    var obj = JSON.parse(data);
-    var iv_1 = obj.iv;
-    var iv = B64_Decrypt(iv_1);
-    var value = obj.value;
-    var word = AES_Decrypt(value, 'lX4uSSGqztP3vQ7K', iv);
-    obj = {};
-    obj = JSON.parse(word);
-    var access_token = obj.data['access_token'];
-	var h = $request.headers;
-	h['Authorization'] = 'Bearer ' + access_token;
-	$done({headers:h});
-	
+const body = 'device%5Bidentifier%5D=' + guid() + '&device%5Bis_speed%5D=1&device%5Bname%5D=iPhone&device%5Bplatform%5D=0&gander=1&source=App%20store&version=v2.0.0';
+const rest = {url: url, headers: headers, body: body};
+$.post(rest, (error, response, data) => {
+    try {
+        var obj = JSON.parse(data);
+        var decryptedData = B64_Decrypt(obj.data);
+        var decryptedObj = JSON.parse(decryptedData);
+        var iv_1 = decryptedObj.iv;
+        var iv = B64_Decrypt(iv_1);
+        var value = decryptedObj.value;
+        var word = AES_Decrypt(value, 'lX4uSSGqztP3vQ7K', iv);
+        var parsedObj = JSON.parse(word);
+        var access_token = parsedObj.data['access_token'];
+        var h = $request.headers;
+        h['Authorization'] = 'Bearer ' + access_token;
+        $done({ headers: h });
+    } catch (e) {
+        console.log(e);
+        $done();
+    }
 });
 
 
