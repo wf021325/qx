@@ -9,11 +9,10 @@
 [rewrite_local]
 # 去广告
 ^http:\//\api\.love\.823123\.com\/facades\/ad_space\.index url reject-200
-
 # VIP显示
 ^http:\/\/api\.love\.823123\.com\/facades\/account\.show$ url script-response-body https://raw.githubusercontent.com/wf021325/qx/master/js/lxy.js
-# 小恋老师，键盘
-^http:\/\/api\.love\.823123\.com\/facades\/open\.chat_stream url script-request-header  https://raw.githubusercontent.com/wf021325/qx/master/js/lxy.js
+# 小恋老师，键盘-回复它-开场白
+^http:\/\/api\.love\.823123\.com\/(facades\/open\.chat_stream|v1\/discovery\/query) url script-request-header  https://raw.githubusercontent.com/wf021325/qx/master/js/lxy.js
 
 [mitm]
 hostname  = api.love.823123.com
@@ -40,7 +39,7 @@ if (url.includes('/facades/account.show')) {
     $done({
         body: body
     });
-} else if (url.includes('/facades/open.chat_stream')) {
+} else if (/\/facades\/open\.chat_stream|\/discovery\/query/g.test(url)) {
 	const opt = {
         url: 'http://api.love.823123.com/facades/auth.login.guest',
 		body: 'device%5Bidentifier%5D=' + guid() + '&device%5Bis_speed%5D=1&device%5Bname%5D=iPhone&device%5Bplatform%5D=0&gander=1&source=App%20store&version=v2.0.0',
@@ -71,8 +70,9 @@ if (url.includes('/facades/account.show')) {
 
 
 /* 
-#键盘 http://api.love.823123.com/facades/open.chat_stream?tone_id=26&source=keyboard&question=%E4%BD%A0%E7%9A%84%E5%BE%AE%E4%BF%A1%E6%98%B5%E7%A7%B0%E5%A5%BD%E7%89%B9%E5%88%AB%EF%BC%8C%E4%B8%80%E4%B8%8B%E5%B0%B1%E8%AE%B0%E4%BD%8F%E4%BA%86
-# 小恋老师http://api.love.823123.com/facades/open.chat_stream?question=%E8%82%9A%E5%AD%90%E7%97%9B&tone_id=24&type=1
+# 键盘-回复它 http://api.love.823123.com/facades/open.chat_stream?tone_id=26&source=keyboard&question=%E4%BD%A0%E7%9A%84%E5%BE%AE%E4%BF%A1%E6%98%B5%E7%A7%B0%E5%A5%BD%E7%89%B9%E5%88%AB%EF%BC%8C%E4%B8%80%E4%B8%8B%E5%B0%B1%E8%AE%B0%E4%BD%8F%E4%BA%86
+# 键盘-开场白 http://api.love.823123.com/v1/discovery/query?category_id=16
+# 小恋老师 http://api.love.823123.com/facades/open.chat_stream?question=%E8%82%9A%E5%AD%90%E7%97%9B&tone_id=24&type=1
 
 # http://api.love.823123.com/facades/account.show url script-response-body http://192.168.2.170:8080/lxy.js
 # http://api.love.823123.com/facades/open.chat_stream url script-request-header  http://192.168.2.170:8080/lxy.js
