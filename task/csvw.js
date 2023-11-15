@@ -148,7 +148,6 @@ function status() {
         headers = getHeaders();
         url = `https://mweb.mos.csvw.com/mos-mweb/app-misc/api/user/api/v1/app/member/social/info/users/${$.uid}`;
         const rest = {url, headers};
-        ;
         $.get(rest, (error, response, data) => {
             try {
                 //$.log('查询：'+data)
