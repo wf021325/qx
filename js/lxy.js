@@ -8,11 +8,12 @@
 ====================================
 [rewrite_local]
 # 去广告
-^https:\//\api\.love\.823123\.com\/facades\/ad_space\.index url reject-200
+^https?:\//\api\.love\.823123\.com\/facades\/ad_space\.index url reject-200
+
 # VIP显示
-^https:\/\/api\.love\.823123\.com\/facades\/account\.show$ url script-response-body https://raw.githubusercontent.com/wf021325/qx/master/js/lxy.js
+^https?:\/\/api\.love\.823123\.com\/facades\/account\.show url script-response-body https://raw.githubusercontent.com/wf021325/qx/master/js/lxy.js
 # 小恋老师，键盘-回复它-开场白
-^https:\/\/api\.love\.823123\.com\/(facades\/open\.chat_stream|v1\/discovery\/query) url script-request-header  https://raw.githubusercontent.com/wf021325/qx/master/js/lxy.js
+^https?:\/\/api\.love\.823123\.com\/(facades\/open\.chat_stream|v1\/discovery\/query) url script-request-header  https://raw.githubusercontent.com/wf021325/qx/master/js/lxy.js
 
 [mitm]
 hostname  = api.love.823123.com
@@ -20,12 +21,11 @@ hostname  = api.love.823123.com
  */
  
 const $ = new Env("lxytk")
-
 int();
 const key = 'lX4uSSGqztP3vQ7K';
 let url = $request.url;
 if (url.includes('/facades/account.show')) {
-    var {'iv':iv,'value':value} = resp2obj($response.body);
+    var {'iv': iv,'value': value} = resp2obj($response.body);
     var obj = $.toObj(AES_Decrypt(value, key, iv));
     obj.data.guest = false;
     obj.data.vip_expired_at = '3742732800';
@@ -35,38 +35,37 @@ if (url.includes('/facades/account.show')) {
     obj.data.id = obj.data.identifyCode = 10086;
     obj.data.avatar_url = obj.data.profilePhoto_url = 'https://love-helper.oss-cn-hangzhou.aliyuncs.com/images/2023/09/06/n33C7GybsrML8UHOioWnsV2ERLGjLAnysrqpmLTT.jpg';
     value = AES_Encrypt($.toStr(obj), key, iv);
-	var body = obj2resp({'iv':iv,'value':value});
-    $done({
-        body: body
-    });
+    var body = obj2resp({'iv': iv,'value': value});
+    $done({body: body});
 } else if (/\/facades\/open\.chat_stream|\/discovery\/query/g.test(url)) {
-	const opt = {
-        url: 'http://api.love.823123.com/facades/auth.login.guest',
-		body: 'device%5Bidentifier%5D=' + guid() + '&device%5Bis_speed%5D=1&device%5Bname%5D=iPhone&device%5Bplatform%5D=0&gander=1&source=App%20store&version=v2.0.0',
+    var h = $request.headers;
+    var ua = h['User-Agent'] || h['user-agent'];
+    var version = ua.split('LianBang/')[1].split(" (")[0];
+    const opt = {
+        url: 'https://api.love.823123.com/facades/auth.login.guest',
+        body: 'device%5Bidentifier%5D=' + guid() + '&device%5Bis_speed%5D=1&device%5Bname%5D=iPhone&device%5Bplatform%5D=0&gander=1&source=App%20store&version=v' + version
         headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Authorization': '',
-        'User-Agent': 'LianBang/2.2.0 (iPhone; iOS 15.6.1; Scale/2.00)',
-        'net': 'Wifi',
-        'x-requested-with': 'XMLHttpRequest'
-		}   
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Authorization': '',
+            'User-Agent': ua,
+            'net': 'Wifi',
+            'x-requested-with': 'XMLHttpRequest'
+        }
     }
     $.post(opt, (error, response, data) => {
         try {
             var obj = resp2obj(data);
             var word = AES_Decrypt(obj['value'], key, obj['iv']);
             var access_token = $.toObj(word)['data']['access_token'];
-            var h = $request.headers;
             h['Authorization'] = 'Bearer ' + access_token;
-            $done({
-                headers: h
-            });
+            $done({headers: h});
         } catch (e) {
-            console.log(e);
+            //console.log(e);
             $done();
         }
     });
 }
+
 
 
 /* 
