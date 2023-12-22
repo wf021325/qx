@@ -8,11 +8,11 @@
 ====================================
 [rewrite_local]
 # 去广告
-^http:\//\api\.love\.823123\.com\/facades\/ad_space\.index url reject-200
+^https?:\//\api\.love\.823123\.com\/facades\/ad_space\.index url reject-200
 # VIP显示
-^http:\/\/api\.love\.823123\.com\/facades\/account\.show$ url script-response-body https://raw.githubusercontent.com/wf021325/qx/master/js/lxy.js
+^https?:\/\/api\.love\.823123\.com\/facades\/account\.show$ url script-response-body https://raw.githubusercontent.com/wf021325/qx/master/js/lxy.js
 # 小恋老师，键盘-回复它-开场白
-^http:\/\/api\.love\.823123\.com\/(facades\/open\.chat_stream|v1\/discovery\/query) url script-request-header  https://raw.githubusercontent.com/wf021325/qx/master/js/lxy.js
+^https?:\/\/api\.love\.823123\.com\/(facades\/open\.chat_stream|v1\/discovery\/query) url script-request-header  https://raw.githubusercontent.com/wf021325/qx/master/js/lxy.js
 
 [mitm]
 hostname  = api.love.823123.com
