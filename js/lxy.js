@@ -19,13 +19,14 @@
 hostname  = api.love.823123.com
 ====================================
  */
- 
+
 const $ = new Env("lxytk")
+
 int();
 const key = 'lX4uSSGqztP3vQ7K';
 let url = $request.url;
 if (url.includes('/facades/account.show')) {
-    var {'iv': iv,'value': value} = resp2obj($response.body);
+    var {'iv':iv,'value':value} = resp2obj($response.body);
     var obj = $.toObj(AES_Decrypt(value, key, iv));
     obj.data.guest = false;
     obj.data.vip_expired_at = '3742732800';
@@ -35,38 +36,38 @@ if (url.includes('/facades/account.show')) {
     obj.data.id = obj.data.identifyCode = 10086;
     obj.data.avatar_url = obj.data.profilePhoto_url = 'https://love-helper.oss-cn-hangzhou.aliyuncs.com/images/2023/09/06/n33C7GybsrML8UHOioWnsV2ERLGjLAnysrqpmLTT.jpg';
     value = AES_Encrypt($.toStr(obj), key, iv);
-    var body = obj2resp({'iv': iv,'value': value});
-    $done({body: body});
+	var body = obj2resp({'iv':iv,'value':value});
+    $done({
+        body: body
+    });
 } else if (/\/facades\/open\.chat_stream|\/discovery\/query/g.test(url)) {
-    var h = $request.headers;
-    var ua = h['User-Agent'] || h['user-agent'];
-    var version = ua.split('LianBang/')[1].split(" (")[0];
-    const opt = {
-        url: 'https://api.love.823123.com/facades/auth.login.guest',
-        body: 'device%5Bidentifier%5D=' + guid() + '&device%5Bis_speed%5D=1&device%5Bname%5D=iPhone&device%5Bplatform%5D=0&gander=1&source=App%20store&version=v' + version
+	const opt = {
+        url: 'http://api.love.823123.com/facades/auth.login.guest',
+		body: 'device%5Bidentifier%5D=' + guid() + '&device%5Bis_speed%5D=1&device%5Bname%5D=iPhone&device%5Bplatform%5D=0&gander=1&source=App%20store&version=v2.3.2',
         headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Authorization': '',
-            'User-Agent': ua,
-            'net': 'Wifi',
-            'x-requested-with': 'XMLHttpRequest'
-        }
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': '',
+        'User-Agent': 'LianBang/2.3.2 (iPhone; iOS 15.6.1; Scale/2.00)',
+        'net': 'Wifi',
+        'x-requested-with': 'XMLHttpRequest'
+		}   
     }
     $.post(opt, (error, response, data) => {
         try {
             var obj = resp2obj(data);
             var word = AES_Decrypt(obj['value'], key, obj['iv']);
             var access_token = $.toObj(word)['data']['access_token'];
+            var h = $request.headers;
             h['Authorization'] = 'Bearer ' + access_token;
-            $done({headers: h});
+            $done({
+                headers: h
+            });
         } catch (e) {
-            //console.log(e);
+            console.log(e);
             $done();
         }
     });
 }
-
-
 
 /* 
 # 键盘-回复它 http://api.love.823123.com/facades/open.chat_stream?tone_id=26&source=keyboard&question=%E4%BD%A0%E7%9A%84%E5%BE%AE%E4%BF%A1%E6%98%B5%E7%A7%B0%E5%A5%BD%E7%89%B9%E5%88%AB%EF%BC%8C%E4%B8%80%E4%B8%8B%E5%B0%B1%E8%AE%B0%E4%BD%8F%E4%BA%86
