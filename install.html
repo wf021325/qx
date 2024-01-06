@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>install</title>
+    <link rel="icon" href="favicon.ico" type="image/x-icon" />
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0,viewport-fit=cover"
+    />
+    <style>
+      body {
+        margin: 0 auto;
+      }
+
+      .main {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: absolute;
+        width: 100%;
+        bottom: 15%;
+      }
+
+      .btn {
+        background: #3a72ff;
+        color: white;
+        margin-top: 20px;
+        padding: 15px 60px;
+        text-align: center;
+        font-size: 20px;
+        border-radius: 20px;
+        cursor: pointer;
+      }
+
+      .btn:hover,
+      .btn:focus {
+        background: #074af3;
+      }
+
+      .title {
+        color: red;
+        font-size: 24px;
+        font-weight: bold;
+        text-align: center;
+      }
+
+      .result {
+        margin-top: 20px;
+        font-size: 16px;
+        color: #4caf50;
+      }
+    </style>
+    <script>
+      var url = "itms-services://?action=download-manifest&url=";
+      var locationAPI = `https://${serverIP}:${serverPort}/plist`;
+      var Api2 = `https://www.dibaqu.com/utils/plist/execute?app=${BundleId}&bundle=${BundleId}&downloadLink=${ipaLink}&link=`;
+
+      function install_1() {
+        window.location = url + locationAPI;
+      }
+      function install_2() {
+        window.location = url + encodeURIComponent(Api2);
+      }
+      function install_3() {
+        window.location = url + encodeURIComponent(Api3);
+      }
+    </script>
+  </head>
+
+  <body>
+    <div class="main">
+      <div class="title">使用Safari打开安装</div>
+      <div>【一个不行就换另一个】</div>
+      <div>本地API(部分版本IOS无法使用)</div>
+      <div>远程API(都能使用，但可能跑路)</div>
+      <div class="title">${ipaName}</div>
+      <div class="title">${OSVersion}</div>
+      <div class="btn" onclick="install_1()">安装1(本地API)</div>
+      <div class="btn" onclick="install_2()">安装2(远程API)</div>
+    </div>
+  </body>
+</html>
