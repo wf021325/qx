@@ -65,7 +65,7 @@ var node='', channel='', adiu='', userId='', actID='', playID='', sessionid='',i
     intCryptoJS();
 
     message += `----------微信小程序签到----------\n`;
-    node = 'wechatMP',channel = 'h5_common',actID = '53A3fQm9AM7',playID = '53A31cHhhPJ';
+    node = 'wechatMP',channel = 'h5_common',actID = '53A31cHhhPJ',playID = '53A3fQm9AM7';
     await checkIn(); isOk && (await signIn());
 
     message += `----------高德地图APP签到----------\n`;
@@ -73,7 +73,7 @@ var node='', channel='', adiu='', userId='', actID='', playID='', sessionid='',i
     await checkIn(); isOk && (await signIn());
 
     message += `----------支付宝小程序签到----------\n`;
-    node = 'alipayMini',channel = 'alipay_mini',actID = '53wHtx24q7u',playID = '53wHnt77TQ5';
+    node = 'alipayMini',channel = 'alipay_mini',actID = '53wHnt77TQ5',playID = '53wHtx24q7u';
     await checkIn(); isOk && (await signIn());
 
     console.log(message); //node,青龙日志
