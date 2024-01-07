@@ -161,7 +161,7 @@ function getHeaders(sessionid) {
 function getShowBody(node, channel,adiu, userId, sign, actID, playIDs) {
     return {
         "bizVersion": "060800",
-        "h5version": "6.35.14",
+        "h5version": "6.80.17",
         "platform": "ios",
         "tid": adiu,
         "eId": "",
@@ -186,7 +186,7 @@ function getShowBody(node, channel,adiu, userId, sign, actID, playIDs) {
 function getSigBody(node, channel, adiu, userId, sign, actID, playID, signTerm, signDay) {
     return{
         "bizVersion": "060800",
-        "h5version": "6.35.14",
+        "h5version": "6.80.17",
         "platform": "ios",
         "tid": adiu,
         "eId": "",
