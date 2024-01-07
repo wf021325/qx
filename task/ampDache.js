@@ -231,7 +231,7 @@ function checkIn() {
                             signTerm = obj?.data?.playMap?.dailySign?.signTerm;
                             signDay = t.day;
                             isSign = t.isSign;//isSign = 1 为签到过，懒得管了，让它再提交一次吧
-                            message += `查询:${t.date} isSign=${isSign}\n`;
+                            message += `查询:${t.date} isSign=${isSign} ${t.award.amount}里程\n`;
                             return isOk = true;//查询结果
                         }
                     })
