@@ -1,5 +1,6 @@
 /*
-
+ * 2024-04-25更新
+ 
  * 脚本名称：hifini签到
  * 签到入口：https://www.hifini.com
  * 获取Cookie：手机端登录后回到首页脚本会自动获取cookie，未登录获取到的Cookie无效。青龙面板自己解决Cookie。
@@ -40,7 +41,7 @@ const _key = 'hifini_KEY';
 $.hifini = $.getdata(_key) || ($.isNode() ? process.env[_key] : '');
 const notify = $.isNode() ? require('./sendNotify') : '';
 
-var message = "";
+var message = "",sign = "";
 
 !(async() => {
     if (typeof $request != "undefined") {
@@ -48,7 +49,8 @@ var message = "";
         return;
     }
     if ($.hifini != undefined) {
-        await signin();
+		await getsign();
+		sign !== "" ? await signin() : $.msg($.name, '', '❌请先获取Cookie🎉');
         console.log(message);
         await SendMsg(message);
     }else{
@@ -74,6 +76,27 @@ function getCookie() {
     }
 }
 
+function getsign() {
+    return new Promise((resolve) => {
+        headers = {'Cookie': $.hifini}
+        url = 'https://www.hifini.com/';
+        const rest = {url: url,headers: headers};
+        $.get(rest, (error, response, data) => {
+            try {
+                //const doc = new DOMParser().parseFromString(data, 'text/html');
+                //const aaa = doc.querySelector("body > script:nth-child(20)").textContent;
+                //sign = aaa.match(/[a-f0-9]{64}/)?.[0];
+                sign = data.match(/[a-f0-9]{64}/)?.[0];
+                //console.log('sign：' + sign);
+            } catch (e) {
+                $.logErr(e, "❌请重新登陆更新Cookie");
+            } finally {
+                resolve();
+            }
+        });
+    });
+}
+
 function signin() {
     return new Promise((resolve) => {
         headers = {
@@ -81,14 +104,14 @@ function signin() {
             'Cookie': $.hifini
         }
         url = 'https://www.hifini.com/sg_sign.htm';
-        const rest = {url:url, body:'', headers:headers};
+        const rest = {url: url,body: 'sign=' + sign,headers: headers};
         $.post(rest, (error, response, data) => {
             try {
                 //console.log('签到：'+data);
                 var obj = JSON.parse(data);
                 message += `签到:${obj?.message}\n`;
             } catch (e) {
-                $.logErr(e,"❌请重新登陆更新Cookie");
+                $.logErr(e, "❌请重新登陆更新Cookie");
             } finally {
                 resolve();
             }
