@@ -2,7 +2,7 @@
 高德抢券
 仅QX测试
 
-2024-04-25更新
+2024-05-31更新
 
 抢购次数环境变量名称【gdgdgd】     gdgdgd = 50
 //如果不管默认抢50次，具体怎么手动设置次数，自己研究
@@ -26,34 +26,26 @@ var message1 = '';
 
 !(async () => {
         if (gdVal != undefined) {
-                let obj = {userId, adiu, sessionid} = JSON.parse(gdVal)
-                if (sessionid.length < 30) {
-                        $.msg($.name, '', '❌请先获取sessionid🎉');
-                        return;
-                }
-        } else {
-                $.msg($.name, '', '❌请先获取sessionid🎉');
-                return;
-        }
+                let obj = {userId, adiu, sessionid} = JSON.parse(gdVal);
+                if (sessionid.length < 30) {$.msg($.name, '', '❌请先获取sessionid🎉');return;}
+        } else {$.msg($.name, '', '❌请先获取sessionid🎉');return;}
 
-        intRSA();
-        intCryptoJS();
-        indMD5();
+        intRSA(), intCryptoJS(), indMD5();
 
         message1 += `----------高德抢券----------\n`;
         let {code, data, message} = await checkIn();
         if (code == 1 && data?.rushBuyList.length > 0) {
-                data?.rushBuyList.forEach(async (item) => {
-                        //$.log(item.title + '-' + item.id + '-' + item.title.includes('5元'));
+                data?.rushBuyList.forEach((item) => {
+                        //$.log(item.title + '-' + item.id + '-' + item.status + '-' + item.title.includes('5元'));
                         if (item.title.includes('5元')) {
-                                message1 += `查券:${item.title} - ${item.buttonText}\n`;
+                                message1 += `查券:${item.title} - ${item.buttonText} \n`;
                                 $.buyId = item.id;
                                 $.status = item.status;
                                 return;
                         }
                 });
-                if ($.status < 3) {
-                        let a = $.getdata('gdgdgd') || 50;
+                if ($.status < 3) {// <3  调试>8  防止活动未开始频繁提交
+                        let a = $.getdata('gdgdgd') || 50;//抢购次数，默认50
                         for (let i = 0; i < a; i++) {
                                 let {code, data, cnMessage} = await signIn($.buyId);
                                 if (code == 1) {
@@ -64,29 +56,17 @@ var message1 = '';
                         }
                 }
 
-        } else if (code == 14) {
-                message1 += `查券:sessionid失效请重新获取\n`;
-        }
+        } else if (code == 14) {message1 += `查券:sessionid失效请重新获取\n`;}
         console.log(message1);//node,青龙日志
         await SendMsg(message1);
-
 })()
     .catch((e) => {$.log("", `❌失败! 原因: ${e}!`, "");})
     .finally(() => {$.done();});
 
-function getKey() {
-        for (var t = 'ABCDEFGHJKMNPQRSTWXYZabcdefhijkmnprstwxyz2345678', n = t.length, r = "", i = 0; i < 16; i++)
-                r += t.charAt(Math.floor(Math.random() * n));
-        return r
-}
-function getSign(id) {
-        const sign = 'h5_common' + id + '@oEEln6dQJK7lRfGxQjlyGthZ4loXcRHR'
-        return md5(sign).toUpperCase()
-}
-function getBody(body,key) {
-        body = 'in=' + encodeURIComponent(Encrypt_Body(Json2Form(body), key));
-        return body
-}
+function getKey() {for (var t = 'ABCDEFGHJKMNPQRSTWXYZabcdefhijkmnprstwxyz2345678', n = t.length, r = "", i = 0; i < 16; i++) r += t.charAt(Math.floor(Math.random() * n));return r}
+
+function getBody(body,key) {body = 'in=' + encodeURIComponent(Encrypt_Body(body, key));return body}
+
 function getHeaders(sessionid) {
         return {
                 'Content-Type': 'application/x-www-form-urlencoded',
@@ -94,8 +74,9 @@ function getHeaders(sessionid) {
                 'sessionid': sessionid
         }
 }
-function getBuylistBody(adiu, userId, sign) {
-        return {
+
+function getBuylistBody(adiu, userId, sign, ts) {
+        return Json2Form({
                 "bizVersion": "060305",
                 "h5version": "6.35.14",
                 "platform": "ios",
@@ -106,7 +87,7 @@ function getBuylistBody(adiu, userId, sign) {
                 "imei": adiu,
                 "idfa": adiu,
                 "enterprise": "0",
-                "ts": new Date().getTime(),
+                "ts": ts,
                 "uid": userId,
                 "userId": userId,
                 "channel": 'h5_common',
@@ -114,57 +95,34 @@ function getBuylistBody(adiu, userId, sign) {
                 "isShowAll": true,
                 "adcode": "",
                 "sign": sign
-        }
-}
-function getSigBody(adiu, userId, sign, rightid) {
-        return{
-                "bizVersion": "060305",
-                "h5version": "6.35.14",
-                "platform": "ios",
-                "tid": adiu,
-                "eId": "",
-                "adiu": adiu,
-                "diu": adiu,
-                "imei": adiu,
-                "idfa": adiu,
-                "enterprise": "0",
-                "ts": new Date().getTime(),
-                "uid": userId,
-                "userId": userId,
-                "channel": "h5_common",
-                "dip": "20020",
-                "rightid": rightid,
-                "isRushBuy": "true",
-                "modile": "",
-                "div": "",
-                "sign": sign
-        }
+        })
 }
 
 async function checkIn() {
+        ts = Math.floor(new Date().getTime() / 1000);
         key = getKey();
         xck = encodeURIComponent(RSA_Public_Encrypt(key));
-        sign = getSign(userId);
-        _in = encodeURIComponent(Encrypt_Body("channel=h5_common&sign=" + sign + "&uid=" + userId, key));
-        url='https://m5.amap.com/ws/vip/rush-buy-list?adiu=' + adiu + '&node=wechatMP&env=prod&xck_channel=default&xck=' + xck + '&in=' + _in;
-        body = getBody(getBuylistBody(adiu, userId, sign),key);
+        sign = md5(`h5_common${userId}@oEEln6dQJK7lRfGxQjlyGthZ4loXcRHR`).toUpperCase();
+        _in = encodeURIComponent(Encrypt_Body(`channel=h5_common&sign=${sign}&uid=${userId}`, key));
+        url = `https://m5.amap.com/ws/vip/rush-buy-list?adiu=${adiu}&node=wechatMP&env=prod&xck_channel=default&xck=${xck}&in=${_in}`;
+        body = getBody(getBuylistBody(adiu, userId, sign, ts), key);
         headers = getHeaders(sessionid);
-        const rest = {url: url,body: body,headers: headers,method: "post"};
+        const rest = {url: url, body: body, headers: headers, method: "post"};
         return await httpRequest(rest);
 }
 
 async function signIn(rightid) {
+        ts = Math.floor(new Date().getTime() / 1000);
         key = getKey();
         xck = encodeURIComponent(RSA_Public_Encrypt(key));
-        sign = getSign(rightid);
-        _in = encodeURIComponent(Encrypt_Body('channel=h5_common&rightid=' + rightid + '&sign=' + sign, key));
-        url='https://m5.amap.com/ws/vip/exchange-right?adiu=' + adiu + '&node=wechatMP&env=prod&xck_channel=default&xck=' + xck + '&in=' + _in;
-        body = getBody(getSigBody(adiu, userId, sign, rightid),key);
-        headers = getHeaders(sessionid);
-        const rest = {url: url,body: body,headers: headers,method: "post"};
+        sign = md5(`h5_common${userId}${ts}${rightid}@oEEln6dQJK7lRfGxQjlyGthZ4loXcRHR`).toUpperCase();
+        _in = encodeURIComponent(Encrypt_Body(`channel=h5_common&rightID=${rightid}&sign=${sign}&ts=${ts}&uid=${userId}`, key));
+        url = `https://m5.amap.com/ws/vip/right/exchange?adiu=${adiu}&node=wechatMP&env=prod&xck_channel=default&xck=${xck}&in=${_in}`;
+        body = getBody(`adiu=${adiu}&app_lang=zh-Hans&bizVersion=050500&channel=h5_common&dip=20020&diu=${adiu}&div=&eId=&enterprise=0&h5version=7.25.10&idfa=${adiu}&imei=${adiu}&isRushBuy=true&platform=ios&rightID=${rightid}&sign=${sign}&tid=${adiu}&ts=${ts}&uid=${userId}&userId=${userId}`, key);
+        headers = {...getHeaders(sessionid), 'ua': 'defaultUA1_uab_not_loaded@@https://dache.amap.com/common/wxmini@@' + ts};
+        const rest = {url: url, body: body, headers: headers, method: "post"};
         return await httpRequest(rest);
 }
-
 
 //通知
 async function SendMsg(message){$.isNode()?await notify.sendNotify($.name,message):$.msg($.name,"",message);}
