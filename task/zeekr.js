@@ -85,7 +85,7 @@ function gethead() {
         x_ca_sign: x_ca_sign,
         WorkspaceId: 'prod',
         Version: 2,
-        device_id: '99762632568265303279',
+        //device_id: '99762632568265303279',
         riskTimeStamp: (new Date).getTime(),
         AppId: 'ONEX97FB91F061405',
         "Content-Type": "application/json",
