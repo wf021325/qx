@@ -1,0 +1,15 @@
+官网
+https://rtyley.github.io/bfg-repo-cleaner/
+
+删除文件
+java -jar bfg-1.14.0.jar --delete-files hh.txt
+
+java -jar bfg-1.14.0.jar --delete-files 文件名
+
+删文件夹
+java -jar bfg-1.14.0.jar --delete-folders "{js,task,qx}"
+
+
+git reflog expire --expire=now --all && git gc --prune=now --aggressive
+git push -f
+
