@@ -30,8 +30,8 @@ hostname = mweb.mos.csvw.com
 
 const $ = new Env("上汽大众");
 const _key = 'csvw_data';
-$.huihui = $.getdata(_key) || ($.isNode() ? process.env[_key] : '');
-const notify = $.isNode() ? require('./sendNotify') : '';
+$.huihui  = getEnv(_key);
+//$.log($.huihui)
 var message = "";
 
 !(async () => {
@@ -50,7 +50,7 @@ var message = "";
     $.pid = obj.idpId;
 
     await info()
-    isSign === 1 && (await sign())
+    await sign()
     await status()
 
     console.log(message);//node,青龙日志
@@ -66,7 +66,7 @@ var message = "";
 //取签到数据
 function getToken() {
     if ($request && $request.method != 'OPTIONS') {
-        let a = $.toStr({'headers': $request.headers, 'url': $request.url})
+        let a = $.toStr({'headers': ObjectKeys2LowerCase($request.headers), 'url': $request.url})
         $.setdata(a, _key)
         $.msg($.name, '', '获取签到数据成功🎉\n' + a)
     }
@@ -83,7 +83,7 @@ function getHeaders() {
         Timestamp: Date.now(),
         deviceId: $.headers.deviceId,
         "X-COP-accessToken": $.headers["X-COP-accessToken"] || $.headers["x-cop-accesstoken"],
-		"User-Agent": $.headers["User-Agent"] || $.headers["user-agent"]
+        "User-Agent": $.headers["User-Agent"] || $.headers["user-agent"]
     }
 }
 
@@ -100,11 +100,12 @@ function info() {
                 if (obj?.code == '000000') {
                     for (const item of obj?.data?.beanResponseList) {
                         if (item.signTime === '今天') {
-                            isSign = item.isSign === 1 ? isSign_text = '已签到' : isSign = '未签到'
-                            message += `状态:${isSign_text}\n`;
+                            $.isSign = item?.isSign
+                            $.log($.isSign)
+                            isSign = $.isSign === 1 ? isSign_text = '已签到' : isSign = '未签到'
+                            message += `状态:${isSign}\n`;
                             break;
                         }
-                        return isSign
                     }
                 } else {
                     message += `❌签到失败:${data}!\n`
@@ -128,6 +129,7 @@ function sign() {
             try {
                 var obj = $.toObj(data);
                 //{"code":"000000","data":{"currentSignStatus":1,"exists":0,"signCount":1,"url":null},"description":"success"}
+                //{"code":"000000","data":{"currentSignStatus":1,"exists":0,"signCount":1,"url":""},"description":"success"}
                 //$.log('签到：'+data);//无论你怎么签到都是显示这个结果
                 if (obj?.code == '000000') {
                     message += `签到:成功\n`;
@@ -148,6 +150,7 @@ function status() {
         headers = getHeaders();
         url = `https://mweb.mos.csvw.com/mos-mweb/app-misc/api/user/api/v1/app/member/social/info/users/${$.uid}`;
         const rest = {url, headers};
+        ;
         $.get(rest, (error, response, data) => {
             try {
                 //$.log('查询：'+data)
@@ -162,7 +165,11 @@ function status() {
     });
 }
 
-async function SendMsg(message){$.isNode()?await notify.sendNotify($.name,message):$.msg($.name,"",message);}
+function ObjectKeys2LowerCase(obj){return Object.fromEntries(Object.entries(obj).map(([k,v])=>[k.toLowerCase(),v]))};
+
+async function SendMsg(message){if(!message)return;try{if($.isNode()){try{var notify=require('./sendNotify');}catch(e){var notify=require('./utils/sendNotify');}await notify.sendNotify($.name,message);}else{$.msg($.name,'',message);}}catch(e){$.log(`\n\n-----${$.name}-----\n${message}`);}};
+
+function getEnv(...keys){for(let key of keys){var value=$.isNode()?process.env[key]||process.env[key.toUpperCase()]||process.env[key.toLowerCase()]||$.getdata(key):$.getdata(key);if(value)return value;}};
 
 function Form2Json(str){var obj={};str.split('&').forEach(item=>obj[item.split('=')[0]]=(item.split('=')[1]));var strobj=JSON.stringify(obj);return obj}
 //*****************************
