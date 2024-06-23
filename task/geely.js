@@ -72,7 +72,7 @@ async function signIn() {
     headers = {
         ...getheaders(),
         "Version": $.appversion || "3.22.0",
-        "X-Data-Sign": sign   //b)gh(RpVE%X79~z    0]3K@'9MK+6Jf
+        "X-Data-Sign": sign
     };
     const rest = {url, body, headers}
     let {code, data, message} = await httpRequest(rest);
@@ -84,7 +84,8 @@ async function signIn() {
 // 累计签到
 async function getSignMsg() {
     url = `https://app.geely.com/api/v1/userSign/getSignMsg`;
-    body = '{"year":"2024","month":"6"}';
+    const _Date = new Date();
+    body = `{"year":"${_Date.getFullYear()}","month":"${_Date.getMonth() + 1}"}`;
     headers = {...getheaders()};
     const rest = {url, body, headers}
     let {code, data, message} = await httpRequest(rest);
