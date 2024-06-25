@@ -145,7 +145,7 @@ function gethead(X_Sdk_Date, SignedHeaders, signature) {
 }
 
 //通知
-async function SendMsg(message){$.isNode()?await notify.sendNotify($.name,message):$.msg($.name,"",message);}
+async function sendMsg(message){if(!message)return;try{if($.isNode()){try{var notify=require('./sendNotify');}catch(e){var notify=require('./utils/sendNotify');}await notify.sendNotify($.name,message);}else{$.msg($.name,'',message);}}catch(e){$.log(`\n\n-----${$.name}-----\n${message}`);}};
 
 //时间转换为20240614T143143Z
 function get_Time(t=0){const e=new Date();const pad=(num)=>String(num).padStart(2,'0');return`${e.getUTCFullYear()}${pad(e.getUTCMonth()+1)}${pad(e.getUTCDate())}T${pad(e.getUTCHours()+t)}${pad(e.getUTCMinutes())}${pad(e.getUTCSeconds())}Z`;}
