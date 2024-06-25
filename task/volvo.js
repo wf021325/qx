@@ -66,7 +66,7 @@ async function main() {
     await getToken();
     isOk && (await getsignIn())
     console.log(message); //node,青龙日志
-    await SendMsg(message);
+    await sendMsg(message);
 }
 
 async function getToken() {
