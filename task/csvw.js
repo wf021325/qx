@@ -2,7 +2,9 @@
 上汽大众APP 签到
 仅测试qx,理论支持surge,loon等等
 
-先用新版登录，再覆盖安装旧版，每次打开旧版APP能获得签到ck，稍后可以自行更新到新版使用，这个ck有效期应该很久，有效期待测试。  旧版2.7.1 版本id:845914109
+获取ck只能旧版   旧版2.7.1 版本id:845914109
+先登录新版，再覆盖安装旧版，或者直接登录旧版。每次打开旧版APP能获得签到ck，新版无法mitm，但是这个ck有效期应该很久。
+自己要用更新到新版即可，随便覆盖安装，只要不退出账号ck应该就有效。
 
 ======调试区|忽略======
 # ^https?:\/\/api\.mos\.csvw\.com\/mos\/security\/api\/v1\/app\/at\/actions\/refresh$ url script-request-header http://192.168.2.170:8080/csvw.js
@@ -11,6 +13,7 @@
 ====================================
 [rewrite_local]
 ^https?:\/\/api\.mos\.csvw\.com\/mos\/security\/api\/v1\/app\/at\/actions\/refresh$ url script-request-header https://raw.githubusercontent.com/wf021325/qx/master/task/csvw.js
+# 这是屏蔽旧版APP弹出更新的，开启重写可以使用旧版
 ^https?:\/\/api\.mos\.csvw\.com\/mos\/app-update\/api\/v1\/app\/update$ url reject-dict
 
 [task_local]
