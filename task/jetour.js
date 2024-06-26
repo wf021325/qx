@@ -3,12 +3,12 @@
 仅测试qx,node,理论支持surge,loon等等
 
 ======调试区|忽略======
-# ^https?:\/\/mobile-consumer\.jetour\.com\.cn\/web\/tecent\/im\/sdkInfo\?accountId=\d+&access_token=\w+&terminal=\d$ url script-request-header http://192.168.2.170:8080/jetour.js
+# ^https?:\/\/mobile-consumer\.jetour\.com\.cn\/registerPush\?access_token= url script-request-header http://192.168.2.170:8080/jetour.js
 ======调试区|忽略======
 
 ====================================
 [rewrite_local]
-^https?:\/\/mobile-consumer\.jetour\.com\.cn\/web\/tecent\/im\/sdkInfo\?accountId=\d+&access_token=\w+&terminal=\d$ url script-request-header https://raw.githubusercontent.com/wf021325/qx/master/task/jetour.js
+^https?:\/\/mobile-consumer\.jetour\.com\.cn\/registerPush\?access_token= url script-request-header https://raw.githubusercontent.com/wf021325/qx/master/task/jetour.js
 
 [task_local]
 1 0 * * * https://raw.githubusercontent.com/wf021325/qx/master/task/jetour.js, tag=捷途汽车, enabled=true
