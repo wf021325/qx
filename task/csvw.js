@@ -45,6 +45,7 @@ async function main() {
     var csv = new csvw($.huihui);
     var code = await csv.refresh();
     if (code == '000000') {
+        await csv.refreshSxToken();
         await csv.sign();
         await csv.status();
     }
@@ -103,7 +104,7 @@ function csvw(obj) {
 
         async refreshSxToken() {
             const url = `https://api.mos.csvw.com/mos/operation/home/api/v2/users/${this.userId}/getSxToken?userId=${this.userId}`
-            const headers = this.getHeaders(this.Sign_token);
+            const headers = this.herders;
             const rest = {url, headers};
             const obj = await httpRequest(rest, '刷新userToken');
             this.userToken = obj?.data?.userToken;
