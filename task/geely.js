@@ -2,6 +2,9 @@
 吉利汽车签到
 测试Quantumult-X，nodejs，其他自测
 2024-06-22
+2024-08-28
+签到风控升级处理，请重新获取cookie,青龙也增加了一个参数
+
 获取Cookie方法 ，QX开重写，进入【吉利汽车】
 
 ======调试区|忽略======
@@ -19,7 +22,7 @@
 hostname = app.geely.com
 ====================================
 
-# 青龙环境变量     geely_val = {"token":"xxxxxx-xxxxx-xxxx-xxxx-xxxxxxxxxx"}
+# 青龙环境变量     geely_val={"token":"xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx","devicesn":"XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"}
  */
 
 const $ = new Env("吉利汽车签到");
@@ -33,8 +36,9 @@ async function getCk() {
     if ($request && $request.method != 'OPTIONS') {
         const head = ObjectKeys2LowerCase($request.headers);
         const token = head['token'];
-        if (token) {
-            const ckVal = $.toStr({token});
+        const devicesn = head['devicesn'];
+        if (token && devicesn) {
+            const ckVal = $.toStr({token, devicesn});
             $.setdata(ckVal, _key);
             $.msg($.name, '获取ck成功🎉', ckVal);
         } else {
@@ -45,17 +49,25 @@ async function getCk() {
 
 async function main() {
     if (CK_Val) {
-        const {token} = CK_Val;
+        const {token, devicesn} = CK_Val;
+        if (token && !devicesn) {
+            $.msg($.name, '', '❌❌App升级，请重新更新ck🎉🎉');
+            return;
+        }
         $.token = token;
+        $.devicesn = devicesn;
     } else {
         $.msg($.name, '', '❌请先获取ck🎉');
         return;
     }
     $.appversion = $.toObj((await $.http.get(`https://itunes.apple.com/cn/lookup?id=1518762715`))?.body)?.results[0]?.version;
+    $.appversion = $.appversion ? $.appversion : "3.25.0";
     $.log(`最新版本号：${$.appversion}`);
 
     const code = await signIn();//签到
-    if (code.includes('token')) {return;}// 签到错误停止运行
+    if (code.includes('token')) {
+        return;
+    }// 签到错误停止运行
     await getSignMsg();
     await summary();
 }
@@ -69,10 +81,41 @@ async function signIn() {
     body = `{"signDate":"${time}","ts":"${ts}","cId":"BLqo2nmmoPgGuJtFDWlUjRI2b1b"}`;
     sign = `cId=BLqo2nmmoPgGuJtFDWlUjRI2b1b&signDate=${ts * 1000}&ts=${ts}0]3K@'9MK+6Jf`
     sign = CryptoJS.MD5(sign).toString();
+/*    sweet_security_info = {
+        "appVersion": $.appversion ,
+        "channel": "ios%E5%AE%98%E6%96%B9",
+        "deviceUUID": $.devicesn,
+        "brand": "Apple",
+        "osVersion": "17.6.1",
+        "networkType": "NETWORK_WIFI",//
+        "battery": "100",//电量
+        "os": "iOS",
+        "isCharging": "4",//充电
+        "isSetProxy": "false",//设置代理
+        "isLBSEnabled": "false",//LBS
+        "ip": "192.168.1.1",
+        "platform": "ios",
+        "geelyDeviceId": $.devicesn,
+        "screenResolution": "1290 * 2796",//分辨率
+        "os_version": "17.6.1",
+        "model": "iPhone 15 Pro Max",
+        "isUsingVpn": "flase",//VPN
+        "isJailbreak": "false"//越狱
+    };*/
+    sweet_security_info = {
+        appVersion: $.appversion ,
+        deviceUUID: $.devicesn,
+        geelyDeviceId: $.devicesn
+    }
     headers = {
-        ...getheaders(),
-        "Version": $.appversion || "3.22.0",
-        "X-Data-Sign": sign
+        "X-Data-Sign": sign,
+        appVersion: $.appversion,
+        deviceSN: $.devicesn,
+        sweet_security_info: $.toStr(sweet_security_info),
+        token: $.token,
+        platform: "iOS",
+        "User-Agent": `GLMainProject/${$.appversion} (iPhone; iOS 17.6.1; Scale/2.00)`,
+        "Content-Type": "application/json",
     };
     const rest = {url, body, headers}
     let {code, data, message} = await httpRequest(rest);
@@ -86,7 +129,11 @@ async function getSignMsg() {
     url = `https://app.geely.com/api/v1/userSign/getSignMsg`;
     const _Date = new Date();
     body = `{"year":"${_Date.getFullYear()}","month":"${_Date.getMonth() + 1}"}`;
-    headers = {...getheaders()};
+    headers = {
+        token: $.token,
+        "Content-Type": "application/json",
+        "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_6_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148/ios/geelyApp",
+    };
     const rest = {url, body, headers}
     let {code, data, message} = await httpRequest(rest);
     let _msg;
@@ -94,9 +141,15 @@ async function getSignMsg() {
     pushMsg(_msg);
 }
 //能力体
-async function summary(){
+async function summary() {
     url = `https://app.geely.com/api/v1/growthSystem/energyBody/summary`;
-    headers = {...getheaders()};
+    headers = {
+        appVersion: $.appversion,
+        deviceSN: $.devicesn,
+        token: $.token ,
+        platform: "iOS",
+        "User-Agent": `GLMainProject/${$.appversion} (iPhone; iOS 17.6.1; Scale/2.00)`,
+    };
     const rest = {url, headers};
     let {code, data, message} = await httpRequest(rest);
     let _msg;
@@ -104,14 +157,6 @@ async function summary(){
     //{"code":"success","data":{"total":"2.00"},"message":"API调用成功"}
     pushMsg(_msg);
 
-}
-
-function getheaders() {
-    return {
-        "token": $.token,
-        "Content-Type": "application/json",
-        "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148/ios/geelyApp"
-    }
 }
 
 async function httpRequest(options) {
