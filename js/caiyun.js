@@ -13,7 +13,7 @@
 ^https:\/\/wrapper\.cyapi\.cn\/v1\/(satellite|nafp\/origin_images) url script-request-header https://raw.githubusercontent.com/wf021325/qx/master/js/caiyun.js
 
 # 7.20.0版本显示VIP
-^https?:\/\/biz\.cyapi\.cn\/api\/v1\/user_detail$ url script-response-body http://192.168.2.170:8080/caiyun2.js
+^https?:\/\/biz\.cyapi\.cn\/api\/v1\/user_detail$ url script-response-body https://raw.githubusercontent.com/wf021325/qx/master/js/caiyun.js
 [mitm]
 hostname = *.cyapi.cn
 ====================================
