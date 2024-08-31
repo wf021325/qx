@@ -32,7 +32,7 @@ if (/v1\/(satellite|nafp\/origin_images)/g.test(url)) {
 }
 if(url.includes('v1/activity')){
 	let body = $response.body
-	body = '{"status":"ok","activities":[{"items":[{}]}]}';
+    body = '{"status":"ok","activities":[{"items":[]}]}';
 	huihui.body = body;
 }
 $done(huihui);
