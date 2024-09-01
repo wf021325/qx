@@ -29,7 +29,7 @@ if (url.includes("/v2/user")) {
     const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ2ZXJzaW9uIjoxLCJ1c2VyX2lkIjoiNWY1YmZjNTdkMmM2ODkwMDE0ZTI2YmI4Iiwic3ZpcF9leHBpcmVkX2F0IjoxNzA1MzMxMTY2LjQxNjc3MSwidmlwX2V4cGlyZWRfYXQiOjB9.h_Cem89QarTXxVX9Z_Wt-Mak6ZHAjAJqgv3hEY6wpps';
     huihui.headers = $request.headers;
     huihui.headers['device-token'] = token;
-    if (compareVersions(huihui.headers.version, '7.1.9') > 0) {
+    if (compareVersions(huihui.headers.version, '7.19.0') > 0) {
         huihui.headers.Authorization = 'Bearer ' + token;
     }
 } else if (url.includes('v1/activity')) {
