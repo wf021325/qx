@@ -3,9 +3,9 @@
 
 ====================================
 [rewrite_local]
-# 普通版广告
-^https:\/\/ad\.cyapi\.cn\/v2\/req\?app_name=weather url reject-dict
-# 赏叶赏花
+# 7.1.9 限时福利Svip
+^https:\/\/biz\.cyapi\.cn\/p\/v1\/trial_card\/info url reject-dict
+# 赏叶赏花模块
 ^https:\/\/wrapper\.cyapi\.cn\/v1\/activity\?app_name=weather url script-response-body https://raw.githubusercontent.com/wf021325/qx/master/js/caiyun.js
 # 解锁vip
 ^https:\/\/biz\.cyapi\.cn\/v2\/user url script-response-body https://raw.githubusercontent.com/wf021325/qx/master/js/caiyun.js
@@ -18,29 +18,31 @@
 hostname = *.cyapi.cn
 ====================================
  */
-var huihui = {},
-    url = $request.url;
+var huihui = {}, url = $request.url;
 if (url.includes("/v2/user")) {
     let obj = JSON.parse($response.body);
-    obj.result.is_vip = !0,
-        obj.result.svip_expired_at = 3742732800,
-        obj.result.vip_type = "s",
-        huihui.body = JSON.stringify(obj)
-}
-if (/v1\/(satellite|nafp\/origin_images)/g.test(url)) {
+    obj.result.is_vip = !0;
+    obj.result.svip_expired_at = 3742732800;
+    obj.result.vip_type = "s";
+    huihui.body = JSON.stringify(obj)
+} else if (/v1\/(satellite|nafp\/origin_images)/g.test(url)) {
     const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ2ZXJzaW9uIjoxLCJ1c2VyX2lkIjoiNWY1YmZjNTdkMmM2ODkwMDE0ZTI2YmI4Iiwic3ZpcF9leHBpcmVkX2F0IjoxNzA1MzMxMTY2LjQxNjc3MSwidmlwX2V4cGlyZWRfYXQiOjB9.h_Cem89QarTXxVX9Z_Wt-Mak6ZHAjAJqgv3hEY6wpps';
     huihui.headers = $request.headers;
     huihui.headers['device-token'] = token;
     if (compareVersions(huihui.headers.version, '7.1.9') > 0) {
         huihui.headers.Authorization = 'Bearer ' + token;
     }
-}
-if(url.includes('v1/activity')){
-	let body = $response.body
-    body = '{"status":"ok","activities":[{"items":[]}]}';
-	huihui.body = body;
-}
-if (url.includes('/user_detail')) {
+} else if (url.includes('v1/activity')) {
+    let body = $response.body;
+    const headers = $request.headers;
+    const appversion = headers['app-version'];
+    if (compareVersions(appversion, '7.20.0') < 0) {
+        body = '{"status":"ok","activities":[{"items":[{}]}]}';
+    } else {
+        body = '{"status":"ok","activities":[]}';
+    }
+    huihui.body = body
+} else if (url.includes('/user_detail')) {
     const obj = JSON.parse($response.body);
     obj.vip_info.svip.is_auto_renewal = true;
     obj.vip_info.svip.expires_time = '3742732800';
