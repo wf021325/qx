@@ -50,7 +50,7 @@ if (url.includes("/v2/user")) {
 }
 $done(huihui);
 
-function compareVersions(t, r) {const e = t.split(".").map(Number), n = r.split(".").map(Number);for (let t = 0; t < Math.max(e.length, n.length); t++) {const r = e[t] || 0, i = n[t] || 0;if (r > i) return 1;if (r < i) return -1}return 0}
+function compareVersions(t,r){"string"!=typeof t&&(t="0"),"string"!=typeof r&&(r="0");const e=t.split(".").map(Number),n=r.split(".").map(Number);for(let t=0;t<Math.max(e.length,n.length);t++){const r=e[t]||0,i=n[t]||0;if(r>i)return 1;if(r<i)return-1}return 0}
 
 
 
