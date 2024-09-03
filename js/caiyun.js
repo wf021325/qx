@@ -13,7 +13,7 @@ host, gather.colorfulclouds.net ,reject
 ^https:\/\/biz\.cyapi\.cn\/api\/v1\/token\/device$ url reject-dict
 # 赏叶赏花模块
 ^https:\/\/wrapper\.cyapi\.cn\/v1\/activity\?app_name=weather url script-response-body https://raw.githubusercontent.com/wf021325/qx/master/js/caiyun.js
-# 解锁旧版vip(7.2.0之前)
+# 解锁旧版vip(7.20.0之前)
 ^https:\/\/biz\.cyapi\.cn\/v2\/user url script-response-body https://raw.githubusercontent.com/wf021325/qx/master/js/caiyun.js
 # 卫星云图 48小时预报
 ^https:\/\/wrapper\.cyapi\.cn\/v1\/(satellite|nafp\/origin_images) url script-request-header https://raw.githubusercontent.com/wf021325/qx/master/js/caiyun.js
