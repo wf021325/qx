@@ -7,10 +7,18 @@
 host, gather.colorfulclouds.net ,reject
 
 [rewrite_local]
+# 普通版开屏广告(此广告不定时出现)
+^https:\/\/ad\.cyapi\.cn\/v2\/req\?app_name=weather url reject-dict
 # 7.1.9 限时福利Svip
 ^https:\/\/biz\.cyapi\.cn\/p\/v1\/trial_card\/info url reject-dict
 # 7.2.0普通版修改VIP后提示账号迁移
 ^https:\/\/biz\.cyapi\.cn\/api\/v1\/token\/device$ url reject-dict
+
+# 亲友卡
+^https:\/\/biz\.cyapi\.cn\/p\/v1\/entries url reject-dict
+# 左上角+进去推荐
+^https:\/\/starplucker\.cyapi\.cn\/v3\/config$ url reject-dict
+
 # 赏叶赏花模块
 ^https:\/\/wrapper\.cyapi\.cn\/v1\/activity\?app_name=weather url script-response-body https://raw.githubusercontent.com/wf021325/qx/master/js/caiyun.js
 # 解锁旧版vip(7.20.0之前)
