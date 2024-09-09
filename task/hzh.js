@@ -71,7 +71,7 @@ function signin() {
 		                message += `签到:请勿重复签到\n`;
 	                }
                 } else {
-	                message+=`❌签到失败,原因未知!\n`
+	                message+=`❌${result?.message}\n`
                 }
             } catch (e) {
                 $.logErr(e,"❌请重新登陆更新Token");
