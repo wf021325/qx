@@ -29,7 +29,7 @@ host, gather.colorfulclouds.net ,reject
 ^https?:\/\/biz\.cyapi\.cn\/api\/v1\/user_detail$ url script-response-body https://raw.githubusercontent.com/wf021325/qx/master/js/caiyun.js
 
 [mitm]
-hostname = biz.cyapi.cn, wrapper.cyapi.cn
+hostname = *.cyapi.cn
 ====================================
  */
 var huihui = {}, url = $request.url, headers = ObjectKeys2LowerCase($request.headers);
