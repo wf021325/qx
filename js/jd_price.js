@@ -54,10 +54,8 @@ if (url.indexOf(path2) !== -1) {
             const lowerword = adword_obj();
             lowerword.data.ad.textColor = "#fe0000";
             let bestIndex = floors.findIndex(element =>
-                        element.mId === 'bpAdword' || element.sortId > 46
-                    //element.mId === lowerword.mId || element.sortId > lowerword.sortId
-                )
-            ;
+                element.mId === lowerword.mId || element.sortId > lowerword.sortId
+            );
             bestIndex = bestIndex === -1 ? floors.length : bestIndex;
 
             if (data.ok === 1 && data.single) {
@@ -193,7 +191,7 @@ function adword_obj() {
         },
         "mId": "bpAdword",
         "refId": "eAdword_0000000028",
-        "sortId": 46,
+        "sortId": 13,
         "overHeight": 0,
         "overlayToViewHeight": 0,
         "taroDegrade": false
