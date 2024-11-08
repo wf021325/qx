@@ -38,7 +38,7 @@ host, gather.colorfulclouds.net ,reject
 # 7.20.0版本显示VIP
 ^https?:\/\/biz\.cyapi\.cn\/api\/v1\/user_detail$ url script-response-body https://raw.githubusercontent.com/wf021325/qx/master/js/caiyun.js
 # 7.22.0版本 40天趋势/60天潮汐/风 等等有时候无法加载
-^https:\/\/starplucker\.cyapi\.cn\/v3\/ url script-request-header http://192.168.2.170:8080/caiyun2.js
+^https:\/\/starplucker\.cyapi\.cn\/v3\/ url script-request-header https://raw.githubusercontent.com/wf021325/qx/master/js/caiyun.js
 
 [mitm]
 hostname = *.cyapi.cn
