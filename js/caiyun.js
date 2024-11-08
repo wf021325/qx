@@ -1,8 +1,8 @@
 /*
 彩云天气
 
-大于>7.20.2版本不可以mitm
-需要使用最新版,比如7.22.0,可以通过登录旧版解锁，在线升级到新版版即可
+大于>7.20.2版本不可以mitm  需要使用最新版,比如7.22.0,可以通过登录旧版解锁，在线升级到新版版即可
+如果出现广告无法消除，请卸载重装，或者巨魔用户使用  轻松签+👉应用👉已安装👉彩云天气(Pro)👉清除数据👉仅清空数据(这样清除广告缓存且不需要重新登录)
 
 ====================================
 [filter_local]
@@ -40,6 +40,15 @@ host, gather.colorfulclouds.net ,reject
 # 7.22.0版本 40天趋势/60天潮汐/风 等等有时候无法加载
 ^https:\/\/starplucker\.cyapi\.cn\/v3\/ url script-request-header https://raw.githubusercontent.com/wf021325/qx/master/js/caiyun.js
 
+# 发现-轮播
+^https:\/\/starplucker\.cyapi\.cn\/v3\/operation\/banners\?user_type=paid$ url script-response-body https://raw.githubusercontent.com/wf021325/qx/master/js/caiyun.js
+# 发现-宫格
+^https:\/\/starplucker\.cyapi\.cn\/v3\/operation\/features\?user_type=paid$ url script-response-body https://raw.githubusercontent.com/wf021325/qx/master/js/caiyun.js
+# 发现-官方活动
+^https:\/\/starplucker\.cyapi\.cn\/v3\/campaigns$ url script-response-body https://raw.githubusercontent.com/wf021325/qx/master/js/caiyun.js
+# 发现-瀑布流
+^https:\/\/starplucker\.cyapi\.cn\/v3\/operation\/feeds url script-response-body https://raw.githubusercontent.com/wf021325/qx/master/js/caiyun.js
+
 [mitm]
 hostname = *.cyapi.cn
 ====================================
@@ -65,6 +74,26 @@ if (url.includes("/v2/user")) {
 } else if (url.includes('starplucker.cyapi.cn/v3/')) {
     huihui.headers = headers;
     huihui.headers['authorization'] = `Bearer ${token}`;
+}
+// 轮播
+if (url.includes('/operation/banners')) {
+    huihui.body = `{"data": [{"avatar": "","url": "","title": "","banner_type": ""}],"interval": 5000}`
+}
+// 宫格
+if (url.includes('/operation/features')) {
+    //const obj = JSON.parse($response.body);
+    //obj.data = obj?.data.filter(item => item?.title !== '水汽之旅' && item?.title !== '生活指数');
+    huihui.body = `{"data":[{"avatar":"https://cdn-w.caiyunapp.com/p/app/operation/prod/feature/66a881fbd428d25287131ed0/7c0bc08d8bde602523220d05c3a1f148.png","url":"https://h5.caiyunapp.com/calender","title":"万年历","feature_type":"","badge_type":""},{"avatar":"https://cdn-w.caiyunapp.com/p/app/operation/prod/feature/665579a9a16f650e019e41b0/37f5cb7e2e4bd46fe5162e8adf8cd9ff.png","url":"cy://page_driving_weather","title":"驾驶天气","feature_type":"","badge_type":""},{"avatar":"https://cdn-w.caiyunapp.com/p/app/operation/prod/feature/6556d0853aad9a16ec615563/f3d65d4e56a01de218d51bd57f236a03.png","url":"cy://page_cycling_weather","title":"骑行天气","feature_type":"","badge_type":""},{"avatar":"https://cdn-w.caiyunapp.com/p/app/operation/prod/feature/64100001aa27c7a808e3d3fd/f0377e1e49e60a2dd4d19a095c3273be.png","url":"cy://page_index_fish","title":"钓鱼指数","feature_type":"","badge_type":""},{"avatar":"https://cdn-w.caiyunapp.com/p/app/operation/prod/feature/642555ed55a01b072a6db687/ee2c1efe31ba36445779ae940c5c6901.png","url":"cy://page_index_clothing","title":"穿衣指数","feature_type":"","badge_type":""},{"avatar":"https://cdn-w.caiyunapp.com/p/app/operation/prod/feature/668cf839367625ff6748e635/3e2f27c8642a8e1a49f9619878194845.png","url":"cy://page_earthquake_view","title":"地震地图","feature_type":"","badge_type":""},{"avatar":"https://cdn-w.caiyunapp.com/p/app/operation/prod/feature/66f50b56908a75e646cf76df/1de5a65fc905b2a26c260a377bfa24c2.png","url":"https://h5.caiyunapp.com/mountain-view/list","title":"登山天气","feature_type":"","badge_type":"","badge":""},{"avatar":"https://cdn-w.caiyunapp.com/p/app/operation/prod/feature/66f50fdb908a75e646cf76e1/a57e9c6400ab6c407d565e354d3347a8.png","url":"cy://page_tide_view","title":"60天潮汐","feature_type":"","badge_type":""}]}`
+}
+// 官方活动
+if (url.includes('starplucker.cyapi.cn/v3/campaigns')) {
+    huihui.body = `{"campaigns": []}`
+}
+//瀑布流
+if (url.includes('/operation/feeds')) {
+    const obj = JSON.parse($response.body);
+    obj.data = obj?.data.filter(item => item?.category_name == '文章');
+    huihui.body = JSON.stringify(obj)
 }
 $done(huihui);
 
