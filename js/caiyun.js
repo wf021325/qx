@@ -1,6 +1,9 @@
 /*
 彩云天气
 
+大于>7.20.2版本不可以mitm
+需要使用最新版,比如7.22.0,可以通过登录旧版解锁，在线升级到新版版即可
+
 ====================================
 [filter_local]
 # 上传信息
@@ -19,6 +22,13 @@ host, gather.colorfulclouds.net ,reject
 # 左上角+进去推荐
 ^https:\/\/starplucker\.cyapi\.cn\/v3\/config$ url reject-dict
 
+# 通知
+^https:\/\/starplucker\.cyapi\.cn\/v3\/notification\/message_center url reject-dict
+# 会员限时弹窗
+^https:\/\/starplucker\.cyapi\.cn\/v3\/config\/cypage\/home\/conditions\/local$ url reject-dict
+^https:\/\/starplucker\.cyapi\.cn\/v3\/config\/cypage\/home_activity\/conditions$ url reject-dict
+^https:\/\/starplucker\.cyapi\.cn\/v3\/config\/cypage\/40day\/conditions\/local$ url reject-dict
+
 # 赏叶赏花模块
 ^https:\/\/wrapper\.cyapi\.cn\/v1\/activity\?app_name=weather url script-response-body https://raw.githubusercontent.com/wf021325/qx/master/js/caiyun.js
 # 解锁旧版vip(7.20.0之前)
@@ -27,21 +37,23 @@ host, gather.colorfulclouds.net ,reject
 ^https:\/\/wrapper\.cyapi\.cn\/v1\/(satellite|nafp\/origin_images) url script-request-header https://raw.githubusercontent.com/wf021325/qx/master/js/caiyun.js
 # 7.20.0版本显示VIP
 ^https?:\/\/biz\.cyapi\.cn\/api\/v1\/user_detail$ url script-response-body https://raw.githubusercontent.com/wf021325/qx/master/js/caiyun.js
+# 7.22.0版本 40天趋势/60天潮汐/风 等等有时候无法加载
+^https:\/\/starplucker\.cyapi\.cn\/v3\/ url script-request-header http://192.168.2.170:8080/caiyun2.js
 
 [mitm]
 hostname = *.cyapi.cn
 ====================================
  */
 var huihui = {}, url = $request.url, headers = ObjectKeys2LowerCase($request.headers);
+const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ2ZXJzaW9uIjoxLCJ1c2VyX2lkIjoiNWY1YmZjNTdkMmM2ODkwMDE0ZTI2YmI4Iiwic3ZpcF9leHBpcmVkX2F0IjoxNzA1MzMxMTY2LjQxNjc3MSwidmlwX2V4cGlyZWRfYXQiOjB9.h_Cem89QarTXxVX9Z_Wt-Mak6ZHAjAJqgv3hEY6wpps';
 if (url.includes("/v2/user")) {
     let obj = JSON.parse($response.body);
     Object.assign(obj.result, {is_vip: true, svip_expired_at: 3742732800, vip_type: "s"});
     huihui.body = JSON.stringify(obj)
 } else if (/v1\/(satellite|nafp\/origin_images)/.test(url)) {
-    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ2ZXJzaW9uIjoxLCJ1c2VyX2lkIjoiNWY1YmZjNTdkMmM2ODkwMDE0ZTI2YmI4Iiwic3ZpcF9leHBpcmVkX2F0IjoxNzA1MzMxMTY2LjQxNjc3MSwidmlwX2V4cGlyZWRfYXQiOjB9.h_Cem89QarTXxVX9Z_Wt-Mak6ZHAjAJqgv3hEY6wpps';
     huihui.headers = {...headers, 'device-token': token};
     if (compareVersions(headers['app-version'], '7.19.0') > 0) {
-        huihui.headers['authorization'] = 'Bearer ' + token;
+        huihui.headers['authorization'] = `Bearer ${token}`;
     }
 } else if (url.includes('v1/activity')) {
     const body = compareVersions(headers['app-version'], '7.20.0') < 0 ? '{"status":"ok","activities":[{"items":[{}]}]}' : '{"status":"ok","activities":[]}';
@@ -50,6 +62,9 @@ if (url.includes("/v2/user")) {
     const obj = JSON.parse($response.body);
     Object.assign(obj.vip_info.svip, {is_auto_renewal: true, expires_time: '3742732800'});
     huihui.body = JSON.stringify(obj)
+} else if (url.includes('starplucker.cyapi.cn/v3/')) {
+    huihui.headers = headers;
+    huihui.headers['authorization'] = `Bearer ${token}`;
 }
 $done(huihui);
 
