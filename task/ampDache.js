@@ -38,7 +38,7 @@ async function main() {
     intRSA(), intCryptoJS();
     const list = [
         {"name": "微信端", "node": "wechatMP", "channel": "h5_common", "actID": "53A31cHhhPJ", "playID": "53A3fQm9AM7"},
-        {"name": "APP端", "node": "Amap", "channel": "h5_common", "actID": "53m5Q2UjZ6J", "playID": "53m5Xt43PGU"},
+        {"name": "APP端", "node": "Amap", "channel": "h5_common", "actID": "5meYb12hBo9", "playID": "5meYb1k5sLh"},
         {"name": "支付宝", "node": "alipayMini", "channel": "alipay_mini", "actID": "53wHnt77TQ5", "playID": "53wHtx24q7u"}
     ];
     for (const index of list) {
