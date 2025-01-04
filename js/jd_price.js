@@ -5,22 +5,28 @@
 # 2024-12-22
 # 发现13.8.3又支持此脚本了
 # 脚本修改来源 https://raw.githubusercontent.com/githubdulong/Script/master/jd_price2.sgmodule
-
 # 1. 修复比价接口
 # 2. 之前只能QX，Surge，更换为Env,兼容Loon等，仅测试QX
+2025-01-04
+# 脚本抄袭来源 https://raw.githubusercontent.com/mw418/Loon/main/script/jd_price.js
+# 1. 京东很奇怪，标题下面的比价时有时无  所以增加点击【详情】显示比价(显示在页内)
+# 2. 抄袭上面的部分代码，让显示格式尽量对其
 
 [rewrite_local]
 ^https?:\/\/api\.m\.jd\.com/client\.action\?functionId=(wareBusiness|serverConfig|basicConfig) url script-response-body https://raw.githubusercontent.com/wf021325/qx/master/js/jd_price.js
+^https?:\/\/in\.m\.jd\.com\/product\/graphext\/\d+\.html url script-response-body https://raw.githubusercontent.com/wf021325/qx/master/js/jd_price.js
+
 [mitm]
-hostname = api.m.jd.com
+hostname = api.m.jd.com, in.m.jd.com
 */
 
 const path1 = "serverConfig";
 const path2 = "wareBusiness";
 const path3 = "basicConfig";
+const path4 = '/product/graphext/';
 const consolelog = false;
 const url = $request.url;
-const body = $response.body;
+let body = $response.body;
 const $ = new Env("京东比价");
 
 if (url.indexOf(path1) != -1) {
@@ -41,15 +47,50 @@ if (url.indexOf(path3) != -1) {
     $done({body: JSON.stringify(obj)});
 }
 
+if (url.indexOf(path4) != -1) {
+    const regex = /product\/graphext\/(\d+)\.html/;
+    const match = url.match(regex);
+    const shareUrl = "https://item.m.jd.com/product/" + match[1] + '.html';
+    $.log('商品链接：' + shareUrl);
+    request_history_price(shareUrl).then(data => {
+        if (data) {
+            let adword = '';
+            if (data.ok === 1 && data.single) {
+                const lower = lowerMsgs(data.single);
+                const detail = priceSummary(data);
+                const tip = data.PriceRemark.Tip + "(仅供参考)";
+                adword = `${lower} ${tip}${detail}`;
+                adword = adword.replace(/\n/g, '<br>&nbsp;&nbsp;&nbsp;');//把\n替换成<br>&nbsp;&nbsp;&nbsp;
+            } else if (data.ok === 0 && data.msg.length > 0) {
+                adword = "慢慢买提示您：" + data?.msg;
+            }
+            const regex = /name="bizSort"\s+value='([\s\S]*?)'/;
+            const match = body.match(regex);
+            if (match) {
+                const obj = JSON.parse(match[1])
+                const title = obj[0].val
+                body = body.replace(`<div class='part-title'>${title}</div>`,`<div style="font-size: 14px;color: #C91623;font-family: pingfangSC; border: 2px solid #C91623; border-radius: 10px;">${adword}</div>`)
+                $done({body: body});
+            }
+            $done({});
+        } else {
+            $done({});
+        }
+    }).catch(() => {
+        $done({});
+    });
+}
+
 if (url.indexOf(path2) !== -1) {
     let obj = JSON.parse(body);
     if (Number(obj?.code) > 0 && Number(obj?.wait) > 0) {
         $.msg('灰灰提示，可能被风控，请勿频繁操作', '', obj?.tips);
-        $done({body});
+        $done();
     }
     const floors = obj.floors;
     const commodity_info = floors[floors.length - 1];
     const shareUrl = commodity_info.data.property.shareUrl;
+    $.log('商品链接：' + shareUrl);
 
     request_history_price(shareUrl).then(data => {
         if (data) {
@@ -59,22 +100,23 @@ if (url.indexOf(path2) !== -1) {
                 element.mId === lowerword.mId && element.sortId > lowerword.sortId
             );
             bestIndex = bestIndex === -1 ? floors.length : bestIndex;
-
+            $.log(`商品广告：${String(bestIndex)}：`+ $.toStr(floors[bestIndex].data));//floors[8].data
             if (data.ok === 1 && data.single) {
                 const lower = lowerMsgs(data.single);
                 const detail = priceSummary(data);
                 const tip = data.PriceRemark.Tip + "(仅供参考)";
-                lowerword.data.ad.adword = `${lower} ${tip}\n${detail}`;
+                lowerword.data.ad.adword = `${lower} ${tip}${detail}`;
             } else if (data.ok === 0 && data.msg.length > 0) {
                 lowerword.data.ad.adword = "慢慢买提示您：" + data?.msg;
             }
             floors.splice(bestIndex, 0, lowerword);
+            $.log('修改效果：'+$.toStr(obj.floors[bestIndex].data));//floors[9].data.ad
             $done({body: JSON.stringify(obj)});
         } else {
-            $done({body});
+            $done({});
         }
     }).catch(() => {
-        $done({body});
+        $done({});
     });
 }
 
@@ -90,13 +132,23 @@ function priceSummary(data) {
     let summary = "";
     let listPriceDetail = data.PriceRemark.ListPriceDetail.slice(0, 4);
     let list = listPriceDetail.concat(historySummary(data.single));
+    const maxWidth = list.reduce((max, item) => Math.max(max, item.Price.length), 0);//获取价格最大长度
     list.forEach(item => {
         const nameMap = {
             "双11价格": "双十一价格",
             "618价格": "六一八价格"
         };
         item.Name = nameMap[item.Name] || item.Name;
-        Delimiter = '        ';
+        Delimiter = '  ';
+        if(item.Price=='-'){return} // 没数不展示了
+        //用0或者空补齐价格长度
+        if (item.Price.length + 1 < maxWidth){
+            item.Price = item.Price.includes('.')?item.Price:`${item.Price}.`
+            item.Price = item.Price.padEnd(maxWidth,'0')
+        }
+        if (item.Price.length + 1 == maxWidth) {
+            item.Price = item.Price.padEnd(maxWidth + 1)
+        }
         summary += `\n${item.Name}${Delimiter}${item.Price}${Delimiter}${item.Date}${Delimiter}${item.Difference}`;
     });
     return summary;
@@ -114,7 +166,7 @@ function historySummary(single) {
 
     const createLowest = (name, price, date) => ({
         Name: name,
-        Price: `¥${String(price)}`,
+        Price: `¥${price}`,
         Date: date,
         Difference: difference(currentPrice, price),
         price
@@ -132,7 +184,7 @@ function historySummary(single) {
         const updateLowest = (lowest, days) => {
             if (index < days && price < lowest.price) {
                 lowest.price = price;
-                lowest.Price = `¥${String(price)}`;
+                lowest.Price = `¥${price}`;
                 lowest.Date = date;
                 lowest.Difference = difference(currentPrice, price);
             }
@@ -149,7 +201,6 @@ function difference(currentPrice, price, precision = 2) {
     const diff = (parseFloat(currentPrice) - parseFloat(price)).toFixed(precision);
     return diff == 0 ? "-" : `${diff > 0 ? "↑" : "↓"}${Math.abs(diff)}`;
 }
-
 
 function request_history_price(share_url) {
     return new Promise((resolve, reject) => {
@@ -176,6 +227,8 @@ function request_history_price(share_url) {
 function adword_obj() {
     return {
         "bId": "eCustom_flo_199",
+        "bIdFromNewPlat":"530",
+        "businessCode":"bpAdword",
         "cf": {
             "bgc": "#ffffff",
             "spl": "empty"
@@ -185,14 +238,14 @@ function adword_obj() {
                 "adword": "",
                 "textColor": "#8C8C8C",
                 "color": "#f23030",
-                "newALContent": true,
-                "hasFold": true,
+                "newALContent": false,
+                "hasFold": false,
                 "adLinkContent": "",
                 "adLink": ""
             }
         },
+        "floorName":"广告词",
         "mId": "bpAdword",
-        "refId": "eAdword_0000000028",
         "sortId": 13,
         "overHeight": 0,
         "overlayToViewHeight": 0,
