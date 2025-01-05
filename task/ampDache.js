@@ -42,8 +42,7 @@ async function main() {
         {"name": "支付宝", "node": "alipayMini", "channel": "alipay_mini", "actID": "53wHnt77TQ5", "playID": "53wHtx24q7u"}
     ];
     for (const index of list) {
-        const code = await checkIn(index);
-        if (code == '1') {
+        if (await checkIn(index)) {
             await signIn(index)
         }
     }
@@ -98,6 +97,10 @@ async function checkIn(list) {
     list.url = 'https://m5.amap.com/ws/car-place/show?'
     const {code, data, message} = await httpRequest(getReq(list));
     if (code == '1') {
+        if (!data.actID) {
+            pushMsg(`${list.name}->查询:请到福利中心查看活动是否存在(若存在请联系脚本作者更新)`);
+            return false;
+        }
         const today = $.time('MM月dd日')
         let foundItem = data?.playMap?.dailySign?.signList?.find(t => t?.date === today);//查找今天
         if (foundItem) {
@@ -107,12 +110,12 @@ async function checkIn(list) {
             //const isSign = foundItem.isSign;//isSign = 1 为签到过，懒得管了，让它再提交一次吧
             //$.log(`${$.toStr(foundItem)}  ${$.signTerm}|${$.signDay}|${isSign}`);
             //$.message += `${list.name}->查询:${today}  ${amount}里程\n`;
+            return true;
         }
     } else {
         _msg = `${list.name}->查询:${message}`
         pushMsg(_msg)
     }
-    return code;
 }
 //签到
 async function signIn(list) {
