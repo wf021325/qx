@@ -11,7 +11,7 @@
 # 脚本抄袭来源 https://raw.githubusercontent.com/mw418/Loon/main/script/jd_price.js
 # 1. 京东很奇怪，标题下面的比价时有时无  所以增加点击【详情】显示比价(显示在页内)
 # 2. 抄袭上面的部分代码，让显示格式尽量对其
-2025-0-10
+2025-04-10
 # 修复比价接口
 
 [rewrite_local]
