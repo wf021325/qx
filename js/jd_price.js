@@ -13,44 +13,46 @@
 # 2. 抄袭上面的部分代码，让显示格式尽量对其
 2025-04-10
 # 修复比价接口
+2025-04-18
+# 修复比价接口
+# 首次使用请下载【慢慢买】APP，打开一次，提示【获取ck成功🎉】即可正常比价
 
 [rewrite_local]
 ^https?:\/\/api\.m\.jd\.com/client\.action\?functionId=(wareBusiness|serverConfig|basicConfig) url script-response-body https://raw.githubusercontent.com/wf021325/qx/master/js/jd_price.js
 ^https?:\/\/in\.m\.jd\.com\/product\/graphext\/\d+\.html url script-response-body https://raw.githubusercontent.com/wf021325/qx/master/js/jd_price.js
+^https?:\/\/apapia-sqk-weblogic\.manmanbuy\.com\/userOrder\/hasOrderByMmbDevId$ url script-request-body https://raw.githubusercontent.com/wf021325/qx/master/js/jd_price.js
+
+# ^https?:\/\/apapia-sqk-weblogic\.manmanbuy\.com\/userOrder\/hasOrderByMmbDevId$ url script-request-body http://192.168.2.170:8080/jd_price.js
 # ^https?:\/\/in\.m\.jd\.com\/product\/graphext\/\d+\.html url script-response-body http://192.168.2.170:8080/jd_price.js
 [mitm]
-hostname = api.m.jd.com, in.m.jd.com
+hostname = api.m.jd.com, in.m.jd.com, apapia-sqk-weblogic.manmanbuy.com
 */
 
-const path1 = "serverConfig";
 const path2 = "wareBusiness";
-const path3 = "basicConfig";
 const path4 = '/product/graphext/';
+const manmanbuy_key = 'manmanbuy_val';
 const consolelog = false;
 const url = $request.url;
-let body = $response.body;
 const $ = new Env("京东比价");
 
 intCryptoJS();
-if (url.indexOf(path1) != -1) {
-    let obj = JSON.parse(body);
-    delete obj.serverConfig.httpdns;
-    delete obj.serverConfig.dnsvip;
-    delete obj.serverConfig.dnsvip_v6;
-    $done({body: JSON.stringify(obj)});
+
+if (url.indexOf('/userOrder/hasOrderByMmbDevId') != -1) {
+    const reqbody = $request.body;
+    $.setdata(reqbody, manmanbuy_key);
+    $.msg($.name, '获取ck成功🎉', reqbody);
 }
 
-if (url.indexOf(path3) != -1) {
-    let obj = JSON.parse(body);
-    let JDHttpToolKit = obj.data.JDHttpToolKit;
-    if (JDHttpToolKit) {
-        delete obj.data.JDHttpToolKit.httpdns;
-        delete obj.data.JDHttpToolKit.dnsvipV6;
-    }
-    $done({body: JSON.stringify(obj)});
+function getck() {
+    const ck = $.getdata(manmanbuy_key);
+    if (!ck) return $.msg($.name, '请先打开【慢慢买】APP', '请确保已成功获取ck'), null;
+    const c_mmbDevId = parseQueryString(ck)?.c_mmbDevId;
+    $.log('慢慢买c_mmbDevId：', c_mmbDevId);
+    return c_mmbDevId || ($.msg($.name, '数据异常', '请联系脚本作者检查ck格式'), null);
 }
 
 if (url.indexOf(path4) != -1) {
+    let body = $response.body;
     const regex = /product\/graphext\/(\d+)\.html/;
     const match = url.match(regex);
     const shareUrl = "https://item.m.jd.com/product/" + match[1] + '.html';
@@ -85,6 +87,7 @@ if (url.indexOf(path4) != -1) {
 }
 
 if (url.indexOf(path2) !== -1) {
+    const body = $response.body;
     let obj = JSON.parse(body);
     if (Number(obj?.code) > 0 && Number(obj?.wait) > 0) {
         $.msg('灰灰提示，可能被风控，请勿频繁操作', '', obj?.tips);
@@ -206,13 +209,15 @@ function difference(currentPrice, price, precision = 2) {
     return diff == 0 ? "-" : `${diff > 0 ? "↑" : "↓"}${Math.abs(diff)}`;
 }
 
+
 function request_history_price(share_url,) {
     return new Promise((resolve, reject) => {
         rest_body = {
             "methodName": "getHistoryTrend",
             "p_url": encodeURIComponent(share_url),
             "t": Date.now().toString(),
-            "c_appver": "4.0.10"
+            "c_appver": "4.0.10",
+            "c_mmbDevId": getck()
         }
         rest_body.token = md5(encodeURIComponent('3E41D1331F5DDAFCD0A38FE2D52FF66F' + jsonToCustomString(rest_body) + '3E41D1331F5DDAFCD0A38FE2D52FF66F')).toUpperCase();
         const options = {
@@ -264,6 +269,7 @@ function adword_obj() {
     }
 }
 
+function parseQueryString(queryString) {const jsonObject = {};const pairs = queryString.split('&');pairs.forEach(pair => {const [key, value] = pair.split('=');jsonObject[decodeURIComponent(key)] = decodeURIComponent(value || '');});return jsonObject;}
 function jsonToQueryString(jsonObject) {return Object.keys(jsonObject).map(key => `${encodeURIComponent(key)}=${encodeURIComponent(jsonObject[key])}`).join('&');}
 function jsonToCustomString(jsonObject){return Object.keys(jsonObject).filter(key=>jsonObject[key]!==''&&key.toLowerCase()!=='token').sort().map(key=>`${key.toUpperCase()}${jsonObject[key].toUpperCase()}`).join('');}
 
