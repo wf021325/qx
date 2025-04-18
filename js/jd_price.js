@@ -20,16 +20,17 @@
 [rewrite_local]
 ^https?:\/\/api\.m\.jd\.com/client\.action\?functionId=(wareBusiness|serverConfig|basicConfig) url script-response-body https://raw.githubusercontent.com/wf021325/qx/master/js/jd_price.js
 ^https?:\/\/in\.m\.jd\.com\/product\/graphext\/\d+\.html url script-response-body https://raw.githubusercontent.com/wf021325/qx/master/js/jd_price.js
-^https?:\/\/basic-ucenter\.manmanbuy\.com\/v4\/share\/getShareInfo$ url script-request-body https://raw.githubusercontent.com/wf021325/qx/master/js/jd_price.js
+^https?:\/\/apapia-sqk-weblogic\.manmanbuy\.com\/baoliao\/center\/menu$ url script-request-body https://raw.githubusercontent.com/wf021325/qx/master/js/jd_price.js
 
-# ^https?:\/\/apapia-sqk-weblogic\.manmanbuy\.com\/userOrder\/hasOrderByMmbDevId$ url script-request-body http://192.168.2.170:8080/jd_price.js
+# ^https?:\/\/apapia-sqk-weblogic\.manmanbuy\.com/baoliao\/center\/menu$ url script-request-body http://192.168.2.170:8080/jd_price.js
 # ^https?:\/\/in\.m\.jd\.com\/product\/graphext\/\d+\.html url script-response-body http://192.168.2.170:8080/jd_price.js
 [mitm]
-hostname = api.m.jd.com, in.m.jd.com, basic-ucenter.manmanbuy.com
+hostname = api.m.jd.com, in.m.jd.com, apapia-sqk-weblogic.manmanbuy.com
 */
 
 const path2 = "wareBusiness";
 const path4 = '/product/graphext/';
+const path5 = '/baoliao/center/menu'
 const manmanbuy_key = 'manmanbuy_val';
 const consolelog = false;
 const url = $request.url;
@@ -37,7 +38,7 @@ const $ = new Env("京东比价");
 
 intCryptoJS();
 
-if (url.indexOf('/userOrder/hasOrderByMmbDevId') != -1) {
+if (url.indexOf(path5) != -1) {
     const reqbody = $request.body;
     $.setdata(reqbody, manmanbuy_key);
     $.msg($.name, '获取ck成功🎉', reqbody);
