@@ -216,7 +216,7 @@ function request_history_price(share_url,) {
             "methodName": "getHistoryTrend",
             "p_url": encodeURIComponent(share_url),
             "t": Date.now().toString(),
-            "c_appver": "4.0.10",
+            "c_appver": "4.8.31",
             "c_mmbDevId": getck()
         }
         rest_body.token = md5(encodeURIComponent('3E41D1331F5DDAFCD0A38FE2D52FF66F' + jsonToCustomString(rest_body) + '3E41D1331F5DDAFCD0A38FE2D52FF66F')).toUpperCase();
