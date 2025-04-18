@@ -25,7 +25,7 @@
 # ^https?:\/\/apapia-sqk-weblogic\.manmanbuy\.com\/userOrder\/hasOrderByMmbDevId$ url script-request-body http://192.168.2.170:8080/jd_price.js
 # ^https?:\/\/in\.m\.jd\.com\/product\/graphext\/\d+\.html url script-response-body http://192.168.2.170:8080/jd_price.js
 [mitm]
-hostname = api.m.jd.com, in.m.jd.com, apapia-sqk-weblogic.manmanbuy.com
+hostname = api.m.jd.com, in.m.jd.com, basic-ucenter.manmanbuy.com
 */
 
 const path2 = "wareBusiness";
