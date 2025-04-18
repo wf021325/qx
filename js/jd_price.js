@@ -45,7 +45,7 @@ if (url.indexOf('/userOrder/hasOrderByMmbDevId') != -1) {
 
 function getck() {
     const ck = $.getdata(manmanbuy_key);
-    if (!ck) return $.msg($.name, '请先打开【慢慢买】APP', '请确保已成功获取ck'), null;
+    if (!ck) return $.msg($.name, '请先打开【慢慢买】APP--我的', '请确保已成功获取ck'), null;
     const c_mmbDevId = parseQueryString(ck)?.c_mmbDevId;
     $.log('慢慢买c_mmbDevId：', c_mmbDevId);
     return c_mmbDevId || ($.msg($.name, '数据异常', '请联系脚本作者检查ck格式'), null);
