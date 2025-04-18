@@ -20,7 +20,7 @@
 [rewrite_local]
 ^https?:\/\/api\.m\.jd\.com/client\.action\?functionId=(wareBusiness|serverConfig|basicConfig) url script-response-body https://raw.githubusercontent.com/wf021325/qx/master/js/jd_price.js
 ^https?:\/\/in\.m\.jd\.com\/product\/graphext\/\d+\.html url script-response-body https://raw.githubusercontent.com/wf021325/qx/master/js/jd_price.js
-^https?:\/\/apapia-sqk-weblogic\.manmanbuy\.com\/userOrder\/hasOrderByMmbDevId$ url script-request-body https://raw.githubusercontent.com/wf021325/qx/master/js/jd_price.js
+^https?:\/\/basic-ucenter\.manmanbuy\.com\/v4\/share\/getShareInfo$ url script-request-body https://raw.githubusercontent.com/wf021325/qx/master/js/jd_price.js
 
 # ^https?:\/\/apapia-sqk-weblogic\.manmanbuy\.com\/userOrder\/hasOrderByMmbDevId$ url script-request-body http://192.168.2.170:8080/jd_price.js
 # ^https?:\/\/in\.m\.jd\.com\/product\/graphext\/\d+\.html url script-response-body http://192.168.2.170:8080/jd_price.js
