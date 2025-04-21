@@ -44,10 +44,11 @@ if (url.includes(path2)) {
 if (url.includes(path1)) {
     intCryptoJS();
     $.manmanbuy = getck();
-    const match = url.match(/product\/graphext\/(\d+)\.html/);
-    if (!match) return $done({});
-    const shareUrl = `https://item.jd.com/${match[1]}.html`;
+
     (async () => {
+        const match = url.match(/product\/graphext\/(\d+)\.html/);
+        if (!match) return $done({});
+        const shareUrl = `https://item.jd.com/${match[1]}.html`;
         try {
             const parseRes = await SiteCommand_parse(shareUrl);
             const parse = checkRes(parseRes, '获取 stteId');
