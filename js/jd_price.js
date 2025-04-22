@@ -18,6 +18,8 @@
 # 首次使用请打开【慢慢买】APP，点击【我的】，提示【获取ck成功🎉】即可正常比价
 2025-04-21
 # 修复比价接口，显示为表格
+2025-04-22
+# 更新接口
 
 [rewrite_local]
 ^https?:\/\/in\.m\.jd\.com\/product\/graphext\/\d+\.html url script-response-body https://raw.githubusercontent.com/wf021325/qx/master/js/jd_price.js
@@ -50,10 +52,11 @@ if (url.includes(path1)) {
         if (!match) return $done({});
         const shareUrl = `https://item.jd.com/${match[1]}.html`;
         try {
-            const parseRes = await SiteCommand_parse(shareUrl);
-            const parse = checkRes(parseRes, '获取 stteId');
+            //const parseRes = await SiteCommand_parse(shareUrl);
+            //const parse = checkRes(parseRes, '获取 stteId');
 
-            const basicRes = await getItemBasicInfo(parse.stteId, parse.link);
+            //const basicRes = await getItemBasicInfo(parse.stteId, parse.link);
+            const basicRes = await getItemBasicInfo_v1(shareUrl);
             const basic = checkRes(basicRes, '获取 spbh');
 
             const shareRes = await share(basic.spbh, basic.url);
@@ -143,7 +146,18 @@ async function SiteCommand_parse(searchKey) {
     return await httpRequest(opt);
 }
 
-// 取spbh jf_url
+// 取spbh jf_url V1
+async function getItemBasicInfo_v1(link) {
+    const url = 'https://apapia-history-weblogic.manmanbuy.com/basic/getItemBasicInfo';
+    const payload = {
+        methodName: "getHistoryInfoJava",
+        searchKey: link//https://item.m.jd.com/product/100131792509.html
+    };
+    const opt = get_options(payload, url);
+    return await httpRequest(opt);
+}
+
+// 取spbh jf_url V2
 async function getItemBasicInfo(stteId, link) {
     const url = 'https://apapia-history-weblogic.manmanbuy.com/basic/v2/getItemBasicInfo';
     const payload = {
