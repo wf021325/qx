@@ -18,7 +18,7 @@
 # 首次使用请打开【慢慢买】APP，点击【我的】，提示【获取ck成功🎉】即可正常比价
 2025-04-21
 # 修复比价接口，显示为表格
-2025-04-22
+2025-04-23
 # 更新接口
 
 [rewrite_local]
@@ -35,62 +35,70 @@ const path1 = '/product/graphext/';
 const path2 = '/baoliao/center/menu'
 const manmanbuy_key = 'manmanbuy_val';
 const url = $request.url;
+let body = $response.body;
 const $ = new Env("京东比价");
 
+//【V1】请求3次 次新接口 【V2】请求4次 最新接口
+$.version = $.getdata('mmb_v') || 'V1'
+
 if (url.includes(path2)) {
-    const reqbody = $request.body;
-    $.setdata(reqbody, manmanbuy_key);
+    $.setdata($request.body, manmanbuy_key);
     $.msg($.name, '获取ck成功🎉', reqbody);
 }
 
 if (url.includes(path1)) {
+    main()
+        .then(res => $done(res || {body}))
+        .catch(err => {
+                const html = `<div style= "max-width: 90%;margin: 20px auto;padding: 16px;background: #ffffff;color: #d32f2f;border: 2px solid #f44336;border-radius: 12px;font-size: 16px;text-align:left;box-shadow: 0 2px 6px rgba(0,0,0,0.06);"><strong>${err.message}</strong></div>`;
+                $done({body: body.replace("<body>", `<body>${html}`)});
+            }
+        )
+}
+
+async function main() {
     intCryptoJS();
-    $.manmanbuy = getck();
 
-    (async () => {
-        const match = url.match(/product\/graphext\/(\d+)\.html/);
-        if (!match) return $done({});
-        const shareUrl = `https://item.jd.com/${match[1]}.html`;
-        try {
-            //const parseRes = await SiteCommand_parse(shareUrl);
-            //const parse = checkRes(parseRes, '获取 stteId');
+    const match = url.match(/product\/graphext\/(\d+)\.html/);
+    if (!match) throw new Error("京东URL匹配失败");
 
-            //const basicRes = await getItemBasicInfo(parse.stteId, parse.link);
-            const basicRes = await getItemBasicInfo_v1(shareUrl);
-            const basic = checkRes(basicRes, '获取 spbh');
+    const JD_Url = `https://item.jd.com/${match[1]}.html`;
 
-            const shareRes = await share(basic.spbh, basic.url);
-            const shareLink = checkRes(shareRes, '分享商品');
+    const version = $.version || "V1";
+    let link = JD_Url, stteId;
 
-            const trendId = shareLink.split('?')[1] || '';
-            const trendRes = await trendData(trendId);
-            const trend = checkRes(trendRes, '获取价格趋势');
+    if (version === "V2") {
+        const parse = checkRes(await get_stteId(JD_Url), '获取stteId [V2]');
+        link = parse.link;
+        stteId = parse.stteId;
+    }
+    const basic = checkRes(await get_spbh(link, stteId, version), '获取 spbh [V1/V2]');
+    const trendId = checkRes(await get_share(basic.spbh, basic.url), '分享商品 [V1/V2]').split('?')[1] || '';
+    const trend = checkRes(await get_history(trendId), '获取历史价格失败 [V1/V2]');
+    const ListPriceDetail = trend.priceRemark.ListPriceDetail;
 
-            const exclude = new Set(['常购价格', '历史最高价']);
-            const list = trend.priceRemark.ListPriceDetail.filter(i => !exclude.has(i.Name));
+    const exclude = new Set(['当前到手价', '历史最低价', '618价格', '双11价格', '30天最低价', '60天最低价', '180天最低价']);
+    const list = ListPriceDetail.filter(i => exclude.has(i.Name));
 
-            const html = buildPriceTableHTML(list);
-            body = $response.body.replace(/<body[^>]*>/, match => `${match}\n${html}`);
-            $done({ body });
-        } catch (err) {
-            console.warn(err.message || err);
-            $done({});
-        }
-    })();
+    const html = Price_HTML(list);
+    //body = body.replace(/<body[^>]*>/, match => `${match}\n${html}`);
+    body = body.replace("<body>", `<body>${html}`);
+    return {body};
 }
 
 // 返回结果检查函数
 function checkRes(res, desc = '') {
     if (res.code !== 2000 || !res.result && !res.data) {
+        $.log('慢慢买提示您：' + $.toStr(res));
         throw new Error(`慢慢买提示您：${res.msg || `${desc}失败`}`);
     }
     return res.result || res.data;
 }
 
-// 生成html
-function buildPriceTableHTML(priceList) {
+// 比价html
+function Price_HTML(priceList) {
     const rows = priceList.map(item => {
-        let { Name: name, Date: date, Price: price = '', Difference: diff = '', extraDate } = item;
+        let {Name: name, Date: date, Price: price = '', Difference: diff = ''} = item;
         if (name === '当前到手价') {
             date = $.time('yyyy-MM-dd');
             diff = '仅供参考';
@@ -105,93 +113,87 @@ function buildPriceTableHTML(priceList) {
     return `<div class="price-container"><table class="price-table"><thead><tr><th>类型</th><th>日期</th><th>价格</th><th>差价</th></tr></thead><tbody>${rows}</tbody></table></div><style>body,table{font-family:"PingFang SC","Microsoft YaHei","Helvetica Neue",Helvetica,Arial,sans-serif;}.price-container{max-width:800px;margin:10px auto;padding:10px;font-size:13px;font-weight:bold;background:#FFF9F9;color:#333;border-radius:12px;/*容器圆角*/overflow:hidden;/*防止溢出*/box-shadow:0 2px 8px rgba(0,0,0,0.05);/*微阴影更高级感*/}.price-table{width:100%;border-collapse:separate;border-spacing:0;border-radius:8px;/*表格本身圆角*/overflow:hidden;}.price-table th{background:#e61a23;color:#fff;padding:12px;text-align:left;font-weight:bold;}.price-table td{padding:12px;border-bottom:1px solid#EEE;font-weight:bold;}.price-diff.up{color:#C91623;font-weight:bold;}.price-diff.down{color:#00aa00;font-weight:bold;}</style>`;
 }
 
-// 获取提交信息
-function get_options(extraParams = {},url) {
-    const sourceParams = $.manmanbuy;//全局变量
-    const SECRET_KEY = '3E41D1331F5DDAFCD0A38FE2D52FF66F';
-    const baseParams={t:"",jsoncallback:"?",c_individ:"",c_appver:"",c_ostype:"",c_osver:"",c_devid:"",c_mmbDevId:"",c_systemDevId:"",c_fixDevId:"",c_devmodel:"",c_brand:"",c_operator:"",c_engine:"",c_session:"",c_ddToken:"",c_ctrl:"",c_win:"",c_dp:"",c_safearea:"",c_firstchannel:"",c_firstquerendate:"",c_fristversion:"",c_channel:"",c_uuid:"",c_ssid:"",c_did:"",c_theme:"",c_jpush:"",c_mmbncid:"",sm_deviceid:""};
-
-    const mergedParams = {
-        ...baseParams,
-        ...Object.fromEntries(
-            Object.entries(sourceParams)
-                .filter(([key]) => key in baseParams)
-        ),
-        t: Date.now().toString(),
-        ...extraParams
-    };
-
-    const requestBody = { ...mergedParams };
-    requestBody.token = md5(encodeURIComponent(SECRET_KEY + jsonToCustomString(requestBody) + SECRET_KEY)).toUpperCase();
-
-    return {
+// 提交请求
+async function mmbRequest(Params, url) {
+    //这里用全局，避免每个请求都重新获取ck
+    if (!$.manmanbuy) {
+        $.manmanbuy = getck();
+    }
+    let payloadStr;
+    if (typeof Params === 'string') {
+        payloadStr = Params;// 如果传了 rawBody，直接使用它
+    } else {
+        const SECRET_KEY = '3E41D1331F5DDAFCD0A38FE2D52FF66F';
+        const requestBody = {
+            ...$.manmanbuy,
+            ...Params,
+            t: Date.now().toString()
+        };
+        requestBody.token = md5(encodeURIComponent(SECRET_KEY + jsonToCustomString(requestBody) + SECRET_KEY)).toUpperCase();
+        payloadStr = jsonToQueryString(requestBody); // 转为字符串
+    }
+    const opt = {
         url,
         headers: {
             "Content-Type": "application/x-www-form-urlencoded;charset=utf-8",
             "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_6_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 - mmbWebBrowse - ios"
         },
-        body: jsonToQueryString(requestBody)
+        body: payloadStr
     };
-
+    return await httpRequest(opt);
 }
 
-// stteId
-async function SiteCommand_parse(searchKey) {
+// 根据【明文】商品链接，获取 stteId
+// 只有V2接口才需要
+function get_stteId(searchKey) {
     const url = 'https://apapia-common.manmanbuy.com/SiteCommand/parse';
     const payload = {
         methodName: "commonMethod",
         searchKey
     };
-    const opt = get_options(payload, url);
-    return await httpRequest(opt);
+    return mmbRequest(payload, url);
 }
 
-// 取spbh jf_url V1
-async function getItemBasicInfo_v1(link) {
-    const url = 'https://apapia-history-weblogic.manmanbuy.com/basic/getItemBasicInfo';
-    const payload = {
-        methodName: "getHistoryInfoJava",
-        searchKey: link//https://item.m.jd.com/product/100131792509.html
-    };
-    const opt = get_options(payload, url);
-    return await httpRequest(opt);
-}
-
-// 取spbh jf_url V2
-async function getItemBasicInfo(stteId, link) {
-    const url = 'https://apapia-history-weblogic.manmanbuy.com/basic/v2/getItemBasicInfo';
+function get_spbh(link, stteId, version) {
+    const base = 'https://apapia-history-weblogic.manmanbuy.com/basic';
+    const url = version === "V2"
+        ? `${base}/v2/getItemBasicInfo`
+        : `${base}/getItemBasicInfo`;
     const payload = {
         methodName: "getHistoryInfoJava",
         searchKey: link,
-        stteId
+        ...(version === "V2" && {stteId}) // 仅 V2 需要 stteId
     };
-    const opt = get_options(payload, url);
-    return await httpRequest(opt);
+    return mmbRequest(payload, url);
 }
 
-// 分享链接
-async function share(spbh, jf_url) {
+function get_share(spbh, jf_url) {
     const url = 'https://apapia-history-weblogic.manmanbuy.com/app/share';
     const payload = {
         methodName: "trendJava",
         spbh,
         url: jf_url
     };
-    const opt = get_options(payload, url);
-    return await httpRequest(opt);
+    return mmbRequest(payload, url);
 }
 
 // 取比价详情
-async function trendData(body) {
-    const opt = {
-        url: "https://apapia-history-weblogic.manmanbuy.com/h5/share/trendData",
-        headers: {
-            "Content-Type": "application/x-www-form-urlencoded;charset=utf-8",
-            "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_6_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 - mmbWebBrowse - ios"
-        },
-        body
+function get_history(Params) {
+    const url = "https://apapia-history-weblogic.manmanbuy.com/h5/share/trendData";
+    return mmbRequest(Params, url);  // 直接传入原始字符串
+}
+
+// 提前加载部分ck,避免多次生成
+function int_ck(Params){
+    const baseParams = {jsoncallback: "?", c_individ: "", c_appver: "", c_ostype: "", c_osver: "", c_devid: "", c_mmbDevId: "", c_systemDevId: "", c_fixDevId: "", c_devmodel: "", c_brand: "", c_operator: "", c_engine: "", c_session: "", c_ddToken: "", c_ctrl: "", c_win: "", c_dp: "", c_safearea: "", c_firstchannel: "", c_firstquerendate: "", c_fristversion: "", c_channel: "", c_uuid: "", c_ssid: "", c_did: "", c_theme: "", c_jpush: "", c_mmbncid: "", sm_deviceid: ""};
+    const mergedParams = {
+        ...baseParams,
+        ...Object.fromEntries(
+            Object.entries(Params)
+                .filter(([key]) => key in baseParams)
+        )
     };
-    return await httpRequest(opt);
+    return mergedParams
 }
 
 // 获取ck
@@ -202,15 +204,13 @@ function getck() {
         return null;
     }
     const Params = parseQueryString(ck);// 把Params 转为object
-    if (!Params?.c_mmbDevId) {
+    if (!Params || !Params.c_mmbDevId) {
         $.msg($.name, '数据异常', '请联系脚本作者检查ck格式');
         return null;
     }
-    $.log('慢慢买 c_mmbDevId：', Params.c_mmbDevId);
-    return Params;
+    //$.log('慢慢买 c_mmbDevId：', Params.c_mmbDevId);
+    return int_ck(Params);
 }
-
-
 
 //  二次封装
 async function httpRequest(options) {
