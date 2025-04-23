@@ -35,23 +35,26 @@ const path1 = '/product/graphext/';
 const path2 = '/baoliao/center/menu'
 const manmanbuy_key = 'manmanbuy_val';
 const url = $request.url;
-let body = $response.body;
 const $ = new Env("京东比价");
 
 //【V1】请求3次 次新接口 【V2】请求4次 最新接口
 $.version = $.getdata('mmb_v') || 'V1'
 
 if (url.includes(path2)) {
-    $.setdata($request.body, manmanbuy_key);
+    const reqbody = $request.body
+    $.setdata(reqbody, manmanbuy_key);
     $.msg($.name, '获取ck成功🎉', reqbody);
 }
 
 if (url.includes(path1)) {
+    const responseBody = $response?.body;
     main()
-        .then(res => $done(res || {body}))
+        .then(res => $done(res || { body: responseBody }))
         .catch(err => {
                 const html = `<div style= "max-width: 90%;margin: 20px auto;padding: 16px;background: #ffffff;color: #d32f2f;border: 2px solid #f44336;border-radius: 12px;font-size: 16px;text-align:left;box-shadow: 0 2px 6px rgba(0,0,0,0.06);"><strong>${err.message}</strong></div>`;
-                $done({body: body.replace("<body>", `<body>${html}`)});
+                $done({
+                    body: responseBody.replace("<body>", `<body>${html}`)
+                });
             }
         )
 }
@@ -63,6 +66,7 @@ async function main() {
     if (!match) throw new Error("京东URL匹配失败");
 
     const JD_Url = `https://item.jd.com/${match[1]}.html`;
+    const responseBody = $response?.body;
 
     const version = $.version || "V1";
     let link = JD_Url, stteId;
@@ -81,8 +85,8 @@ async function main() {
     const list = ListPriceDetail.filter(i => exclude.has(i.Name));
 
     const html = Price_HTML(list);
-    //body = body.replace(/<body[^>]*>/, match => `${match}\n${html}`);
-    body = body.replace("<body>", `<body>${html}`);
+    //body = $response.body.replace(/<body[^>]*>/, match => `${match}\n${html}`);
+    const body = responseBody.replace("<body>", `<body>${html}`);
     return {body};
 }
 
@@ -201,12 +205,12 @@ function getck() {
     const ck = $.getdata(manmanbuy_key);
     if (!ck) {
         $.msg($.name, '请先打开【慢慢买】APP', '请确保已成功获取ck');
-        return null;
+        throw new Error(`请先打开【慢慢买】APP,点击我的，获取ck`);
     }
     const Params = parseQueryString(ck);// 把Params 转为object
     if (!Params || !Params.c_mmbDevId) {
         $.msg($.name, '数据异常', '请联系脚本作者检查ck格式');
-        return null;
+        throw new Error(`请联系脚本作者检查ck格式`);
     }
     //$.log('慢慢买 c_mmbDevId：', Params.c_mmbDevId);
     return int_ck(Params);
