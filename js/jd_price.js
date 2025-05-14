@@ -20,6 +20,8 @@
 # 修复比价接口，显示为表格
 2025-04-23
 # 更新接口
+2025-05-15
+# 更新接口
 
 [rewrite_local]
 ^https?:\/\/in\.m\.jd\.com\/product\/graphext\/\d+\.html url script-response-body https://raw.githubusercontent.com/wf021325/qx/master/js/jd_price.js
@@ -73,17 +75,15 @@ async function main() {
 
     if (version === "V2") {
         const parse = checkRes(await get_stteId(JD_Url), '获取stteId [V2]');
-        link = parse.link;
-        stteId = parse.stteId;
+        link = parse?.result?.link;
+        stteId = parse?.result?.stteId;
     }
     const basic = checkRes(await get_spbh(link, stteId, version), '获取 spbh [V1/V2]');
-    const trendId = checkRes(await get_share(basic.spbh, basic.url), '分享商品 [V1/V2]').split('?')[1] || '';
-    const trend = checkRes(await get_history(trendId), '获取历史价格失败 [V1/V2]');
-    const ListPriceDetail = trend.priceRemark.ListPriceDetail;
-
+    const jiagequshi = checkRes(await get_jiagequshi(basic?.result?.url, basic?.result?.spbh), '获取价格趋势')
+    const trend = checkRes(await get_priceRemark(jiagequshi?.result?.trend), '价格备注')
+    const ListPriceDetail = trend?.remark?.ListPriceDetail;
     const exclude = new Set(['当前到手价', '历史最低价', '618价格', '双11价格', '30天最低价', '60天最低价', '180天最低价']);
     const list = ListPriceDetail.filter(i => exclude.has(i.Name));
-
     const html = Price_HTML(list);
     //body = $response.body.replace(/<body[^>]*>/, match => `${match}\n${html}`);
     const body = responseBody.replace("<body>", `<body>${html}`);
@@ -92,17 +92,18 @@ async function main() {
 
 // 返回结果检查函数
 function checkRes(res, desc = '') {
-    if (res.code !== 2000 || !res.result && !res.data) {
+    if (res.ok !== 1) {
         $.log('慢慢买提示您：' + $.toStr(res));
         throw new Error(`慢慢买提示您：${res.msg || `${desc}失败`}`);
     }
-    return res.result || res.data;
+    return res;
 }
 
 // 比价html
 function Price_HTML(priceList) {
     const rows = priceList.map(item => {
         let {Name: name, Date: date, Price: price = '', Difference: diff = ''} = item;
+        // console.log(name,price,date,diff)
         if (name === '当前到手价') {
             date = $.time('yyyy-MM-dd');
             diff = '仅供参考';
@@ -171,20 +172,25 @@ function get_spbh(link, stteId, version) {
     return mmbRequest(payload, url);
 }
 
-function get_share(spbh, jf_url) {
-    const url = 'https://apapia-history-weblogic.manmanbuy.com/app/share';
+function get_jiagequshi(link, spbh) {
+    const url = "https://apapia-history-weblogic.manmanbuy.com/history/v2/getHistoryTrend";
     const payload = {
-        methodName: "trendJava",
-        spbh,
-        url: jf_url
+        methodName: "getHistoryTrend2021",
+        url: link,
+        spbh: spbh
     };
     return mmbRequest(payload, url);
 }
 
-// 取比价详情
-function get_history(Params) {
-    const url = "https://apapia-history-weblogic.manmanbuy.com/h5/share/trendData";
-    return mmbRequest(Params, url);  // 直接传入原始字符串
+function get_priceRemark(jiagequshiyh) {
+    const url = "https://apapia-history-weblogic.manmanbuy.com/history/priceRemark";
+    const payload = {
+        "methodName": "priceRemarkJava",
+        "jiagequshiyh": jiagequshiyh
+    };
+    const res = mmbRequest(payload, url);
+    $.log($.toStr(res))
+    return res
 }
 
 // 提前加载部分ck,避免多次生成
