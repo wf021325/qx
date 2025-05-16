@@ -22,6 +22,8 @@
 # 更新接口
 2025-05-15
 # 更新接口
+2025-02-16
+# 更新APP正常用，脚本风控的问题
 
 [rewrite_local]
 ^https?:\/\/in\.m\.jd\.com\/product\/graphext\/\d+\.html url script-response-body https://raw.githubusercontent.com/wf021325/qx/master/js/jd_price.js
@@ -154,7 +156,9 @@ function get_stteId(searchKey) {
     const url = 'https://apapia-common.manmanbuy.com/SiteCommand/parse';
     const payload = {
         methodName: "commonMethod",
-        searchKey
+        searchKey,
+        scene: "TrendHomeUnInput",
+        c_ctrl: "Tabs"
     };
     return mmbRequest(payload, url);
 }
@@ -167,6 +171,7 @@ function get_spbh(link, stteId, version) {
     const payload = {
         methodName: "getHistoryInfoJava",
         searchKey: link,
+        c_ctrl: "Tabs",
         ...(version === "V2" && {stteId}) // 仅 V2 需要 stteId
     };
     return mmbRequest(payload, url);
@@ -177,7 +182,14 @@ function get_jiagequshi(link, spbh) {
     const payload = {
         methodName: "getHistoryTrend2021",
         url: link,
-        spbh: spbh
+        spbh: spbh,
+        c_ctrl: "TrendDetailScene",
+        callPos: "trend_detail",
+        currentScene: "TrendDetailRecent",
+        eventName: "查询商品历史价格",
+        pagecFrom: "TrendHomeUnInput",
+        chartStyleTest: "testA"
+        // searchKey: "https%3A%2F%2Fitem.m.jd.com%2Fproduct%2F10088498094347.html"
     };
     return mmbRequest(payload, url);
 }
@@ -185,8 +197,16 @@ function get_jiagequshi(link, spbh) {
 function get_priceRemark(jiagequshiyh) {
     const url = "https://apapia-history-weblogic.manmanbuy.com/history/priceRemark";
     const payload = {
-        "methodName": "priceRemarkJava",
-        "jiagequshiyh": jiagequshiyh
+        methodName: "priceRemarkJava",
+        jiagequshiyh: jiagequshiyh,
+        c_ctrl: "TrendDetailScene",
+        // url: "https://item.jd.com/10088498094347.html",
+        // price: "24.9",
+        // className: "抽纸",
+        // spbh: "1|10088498094347",
+        // classId: "2096",
+        // singlePrice: "24.9",
+        // testGroup: "testA",
     };
     const res = mmbRequest(payload, url);
     $.log($.toStr(res))
@@ -194,16 +214,13 @@ function get_priceRemark(jiagequshiyh) {
 }
 
 // 提前加载部分ck,避免多次生成
-function int_ck(Params){
-    const baseParams = {jsoncallback: "?", c_individ: "", c_appver: "", c_ostype: "", c_osver: "", c_devid: "", c_mmbDevId: "", c_systemDevId: "", c_fixDevId: "", c_devmodel: "", c_brand: "", c_operator: "", c_engine: "", c_session: "", c_ddToken: "", c_ctrl: "", c_win: "", c_dp: "", c_safearea: "", c_firstchannel: "", c_firstquerendate: "", c_fristversion: "", c_channel: "", c_uuid: "", c_ssid: "", c_did: "", c_theme: "", c_jpush: "", c_mmbncid: "", sm_deviceid: ""};
-    const mergedParams = {
-        ...baseParams,
-        ...Object.fromEntries(
-            Object.entries(Params)
-                .filter(([key]) => key in baseParams)
-        )
-    };
-    return mergedParams
+function int_ck(Params) {
+    const keysToDelete = ["c_ctrl", "methodName", "level", "t", "token"];
+    const newParams = { ...Params };
+    keysToDelete.forEach(key => {
+        delete newParams[key];
+    });
+    return newParams;
 }
 
 // 获取ck
