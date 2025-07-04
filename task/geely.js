@@ -4,6 +4,8 @@
 2024-06-22
 2024-08-28
 签到风控升级处理，请重新获取cookie,青龙也增加了一个参数
+2025-07-05
+修复签到
 
 获取Cookie方法 ，QX开重写，进入【吉利汽车】
 
@@ -77,9 +79,8 @@ async function signIn() {
     let _msg = '';
     url = `https://app.geely.com/api/v1/userSign/sign/risk`;
     ts = Math.floor((new Date).getTime() / 1000);
-    time = $.time('yyyy-MM-dd HH:mm:ss', ts * 1000);
-    body = `{"signDate":"${time}","ts":"${ts}","cId":"BLqo2nmmoPgGuJtFDWlUjRI2b1b"}`;
-    sign = `cId=BLqo2nmmoPgGuJtFDWlUjRI2b1b&signDate=${ts * 1000}&ts=${ts}0]3K@'9MK+6Jf`
+    body = `{"cId":"BLqo2nmmoPgGuJtFDWlUjRI2b1b","ts":"${ts}"}`
+    sign = `cId=BLqo2nmmoPgGuJtFDWlUjRI2b1b&ts=${ts}0]3K@'9MK+6Jf`
     sign = CryptoJS.MD5(sign).toString();
 /*    sweet_security_info = {
         "appVersion": $.appversion ,
