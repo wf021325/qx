@@ -76,47 +76,6 @@ if (url.includes("/v2/user")) {
         headers['authorization'] = `Bearer ${token}`;
         huihui.headers = headers;
     }
-    if (url === 'https://starplucker.cyapi.cn/v3/favorite_places' && $request.method === 'GET') {
-        // 查看收藏夹
-        const device_id = headers['device-id'];
-        const user_id = headers['user-id'] || ''
-        huihui.url = `https://biz.cyapi.cn/v1/favorite_places?device_id=${device_id}&ostype=apple_ios_free_vip&user_id=${user_id}`
-        delete headers['authorization']
-        delete headers['host']
-        huihui.headers = headers
-    }
-    if (/starplucker\.cyapi\.cn\/v3\/favorite_places\/[a-f0-9]+$/.test(url) && $request.method === 'DELETE') {
-        // 取消收藏
-        huihui.method = 'GET';
-        const match = url.match(/\/([0-9a-f]{12,25})$/)[1];
-        huihui.url = `https://biz.cyapi.cn/v1/favorite_place/${match}/delete`
-        delete headers['authorization']
-        delete headers['host']
-        huihui.headers = headers
-    }
-    if (url === 'https://starplucker.cyapi.cn/v3/favorite_places' && $request.method === 'POST') {
-        // 添加收藏
-        const obj = JSON.parse($request.body);
-        if (obj.token) {
-            huihui.url = 'https://biz.cyapi.cn/v1/favorite_place'
-            delete obj.token;
-            Object.assign(obj, {
-                // weatherNotifySound: "halin_rain",   // 早晚音效
-                // weatherRainingSound: "halin_rain",  // 降雨音效
-                tmpNotify: true,                    // 溫度通知
-                weatherRemind: true,                // 天气提醒
-                is_receive_rain_push: true,         // 短时降雨
-                windNotify: true,                   // 大风通知
-                typhNotify: true,                   // 台风通知
-                earthquakeNotify: true              // 地震通知
-            });
-            huihui.body = JSON.stringify(obj)
-
-            delete headers['authorization']
-            delete headers['host']
-            huihui.headers = headers
-        }
-    }
 }
 
 // 轮播
