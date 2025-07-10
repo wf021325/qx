@@ -22,8 +22,10 @@
 # 更新接口
 2025-05-15
 # 更新接口
-2025-02-16
+2025-05-16
 # 更新APP正常用，脚本风控的问题
+2025-07-10
+# ...
 
 [rewrite_local]
 ^https?:\/\/in\.m\.jd\.com\/product\/graphext\/\d+\.html url script-response-body https://raw.githubusercontent.com/wf021325/qx/master/js/jd_price.js
@@ -34,12 +36,27 @@
 [mitm]
 hostname = in.m.jd.com, apapia-sqk-weblogic.manmanbuy.com
 */
+const $ = new Env("京东比价");
+
+if ($.isNode()) {
+    global.$request = {
+        // https://item.jd.com/100142754310.html
+        // https://item.jd.com/1082266.html
+        url: 'https://item.jd.com/product/graphext/100142754310.html',
+        method: '',
+        headers: {},
+        body: ''
+    };
+    global.$response = {headers: {}, body: '<body>'};
+    global.$done = (obj) => {
+        console.log(obj)
+    };
+}
 
 const path1 = '/product/graphext/';
 const path2 = '/baoliao/center/menu'
 const manmanbuy_key = 'manmanbuy_val';
 const url = $request.url;
-const $ = new Env("京东比价");
 
 //【V1】请求3次 次新接口 【V2】请求4次 最新接口
 $.version = $.getdata('mmb_v') || 'V1'
@@ -56,6 +73,7 @@ if (url.includes(path1)) {
         .then(res => $done(res || { body: responseBody }))
         .catch(err => {
                 const html = `<div style= "max-width: 90%;margin: 20px auto;padding: 16px;background: #ffffff;color: #d32f2f;border: 2px solid #f44336;border-radius: 12px;font-size: 16px;text-align:left;box-shadow: 0 2px 6px rgba(0,0,0,0.06);"><strong>${err.message}</strong></div>`;
+                $.msg('京东比价出现错误', '👉点击此处打开慢慢买检查👈', err.message, {url: `manmanbuy://?type=func&value=MainUtils.openWin(%7Bname%3A'TrendDetailScene',navi%3Anavigation%2CpageParam%3A%7BsearchKey%3A'${$.manmanbuy_url}'%2CsceneFrom%3A'mmbwx'%7D%7D)`})
                 $done({
                     body: responseBody.replace("<body>", `<body>${html}`)
                 });
@@ -70,6 +88,7 @@ async function main() {
     if (!match) throw new Error("京东URL匹配失败");
 
     const JD_Url = `https://item.jd.com/${match[1]}.html`;
+    $.manmanbuy_url = encodeURIComponent(JD_Url); // 用于后续报错点击通知自动跳转到慢慢买
     const responseBody = $response?.body;
 
     const version = $.version || "V1";
@@ -105,7 +124,7 @@ function checkRes(res, desc = '') {
 function Price_HTML(priceList) {
     const rows = priceList.map(item => {
         let {Name: name, Date: date, Price: price = '', Difference: diff = ''} = item;
-        // console.log(name,price,date,diff)
+        console.log(name,price,date,diff)
         if (name === '当前到手价') {
             date = $.time('yyyy-MM-dd');
             diff = '仅供参考';
@@ -152,7 +171,7 @@ async function mmbRequest(Params, url) {
 
 // 根据【明文】商品链接，获取 stteId
 // 只有V2接口才需要
-function get_stteId(searchKey) {
+async function get_stteId(searchKey) {
     const url = 'https://apapia-common.manmanbuy.com/SiteCommand/parse';
     const payload = {
         methodName: "commonMethod",
@@ -160,10 +179,10 @@ function get_stteId(searchKey) {
         scene: "TrendHomeUnInput",
         c_ctrl: "Tabs"
     };
-    return mmbRequest(payload, url);
+    return await mmbRequest(payload, url);
 }
 
-function get_spbh(link, stteId, version) {
+async function get_spbh(link, stteId, version) {
     const base = 'https://apapia-history-weblogic.manmanbuy.com/basic';
     const url = version === "V2"
         ? `${base}/v2/getItemBasicInfo`
@@ -174,10 +193,10 @@ function get_spbh(link, stteId, version) {
         c_ctrl: "Tabs",
         ...(version === "V2" && {stteId}) // 仅 V2 需要 stteId
     };
-    return mmbRequest(payload, url);
+    return await mmbRequest(payload, url);
 }
 
-function get_jiagequshi(link, spbh) {
+async function get_jiagequshi(link, spbh) {
     const url = "https://apapia-history-weblogic.manmanbuy.com/history/v2/getHistoryTrend";
     const payload = {
         methodName: "getHistoryTrend2021",
@@ -191,10 +210,10 @@ function get_jiagequshi(link, spbh) {
         chartStyleTest: "testA"
         // searchKey: "https%3A%2F%2Fitem.m.jd.com%2Fproduct%2F10088498094347.html"
     };
-    return mmbRequest(payload, url);
+    return await mmbRequest(payload, url);
 }
 
-function get_priceRemark(jiagequshiyh) {
+async function get_priceRemark(jiagequshiyh) {
     const url = "https://apapia-history-weblogic.manmanbuy.com/history/priceRemark";
     const payload = {
         methodName: "priceRemarkJava",
@@ -208,9 +227,7 @@ function get_priceRemark(jiagequshiyh) {
         // singlePrice: "24.9",
         // testGroup: "testA",
     };
-    const res = mmbRequest(payload, url);
-    $.log($.toStr(res))
-    return res
+    return await mmbRequest(payload, url);
 }
 
 // 提前加载部分ck,避免多次生成
@@ -225,7 +242,7 @@ function int_ck(Params) {
 
 // 获取ck
 function getck() {
-    const ck = $.getdata(manmanbuy_key);
+    const ck = $.isNode() ? process.env[manmanbuy_key] : $.getdata(manmanbuy_key);
     if (!ck) {
         $.msg($.name, '请先打开【慢慢买】APP', '请确保已成功获取ck');
         throw new Error(`请先打开【慢慢买】APP,点击我的，获取ck`);
