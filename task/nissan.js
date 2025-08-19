@@ -1,7 +1,6 @@
 /*
 东风日产签到，获得成长值
 测试Quantumult-X，nodejs，其他自测
-2024-06-22 QX自动关注第三方API提交，解决QX提交问题(此方法纯属无奈，会泄露Token)
 获取Cookie方法 ，QX开重写，进入【东风日产】
 
 ======调试区|忽略======
@@ -60,9 +59,10 @@ async function main() {
   $.appversion = $.toObj((await $.http.get(`https://itunes.apple.com/cn/lookup?id=1341994593`)).body).results[0].version;
   $.log(`最新版本号：${$.appversion}`);
 
-  var result = await signIn();//签到
+  var result = await signIn2();//签到
   if (result !== '0' && result !== '1') {return;}// 签到错误停止运行
 
+  await public_page_browse();// 浏览广场
   await new_list();//【此刻-最新】帖子    获取 $.push_id, $.tittle, $.user_id
   if (!$.push_id) {return pushMsg('没有找到帖子id')}//找不到帖子ID就停止
   await sort_view();//浏览帖子
@@ -72,16 +72,22 @@ async function main() {
   var result = await comments();//评论帖子
   if (result == '1') {await comments_del();}//删除评论
 
-  let _msg;
-  if ($.isQuanX()) {
-    await post_test('PUT');
-    await post_test('DELETE');
-  } else {
-    // put/delete  DELETE
-    await follow('put');//关注
-    await follow('delete');//取消关注
-  }
+  // put/delete  DELETE
+  await follow('put');//关注
+  await follow('delete');//取消关注
+
   await growthScore();//查询成长值
+}
+
+// 新签到
+async function signIn2(){
+  let _msg = '';
+  url = `/mb-gw/dfn-growth/rest/ly-mp-growth-service/ly/mgs/checkin/signSave`;
+  body = `{"channel":"1","wechat_trade_type":"APP","oneid":"oneid","brandCode":"1","uuid":"${$.uuid}","token":"${$.token}","requestId":"$$timestamp$$"}`;
+  let {result, msg} = await httpPost(url, body);
+  _msg += `签到：${msg}`;
+  pushMsg(_msg);
+  return result
 }
 
 // 签到
@@ -93,6 +99,17 @@ async function signIn() {
   _msg += `签到：${msg}`;
   pushMsg(_msg);
   return result
+}
+
+// 浏览广场页
+async function public_page_browse() {
+    let _msg = '';
+    url = `/mb-gw/dndc-gateway/community/api/v2/user/browse-task-report`;
+    body = `{"id":"","report_type":"public_page_browse"}`;
+    let {result, msg} = await httpPost(url, body);
+    _msg += `广场：${msg}`;
+    pushMsg(_msg);
+    return result
 }
 
 // 查成长值
@@ -174,7 +191,7 @@ async function comments_del() {
 //关注/取消关注 put/delete
 async function follow(method) {
   url = `/mb-gw/dndc-gateway/community/api/v2/user/followings/${$.user_id}`;
-  let {result, msg} = await httpPost(url, '', method);
+  let {result, msg} = await httpPost(url, ' ', method);
   let _msg;
   _msg = (method == 'PUT') ? `关注博主：${msg}` : `取消关注：${msg}`;
   pushMsg(_msg);
@@ -204,42 +221,6 @@ async function httpPost(url, body, method) {
   };
   const rest = {url, headers, method, ...(body ? {body} : {})};
   return await httpRequest(rest);
-}
-
-async function post_test(method) {
-  url = 'https://tool.vlwx.com/http/api.php';
-  appversion = $.appversion || '3.1.5';
-  timestamp = Math.floor(Date.now() / 1000);
-  noncestr = getNonce();
-  sign = CryptoJS.SHA512(`nissanapp${timestamp}${$.token}${noncestr}1${$.uuid}`).toString();
-  body = `{
-    "method": "${method}",
-    "url": "https://oneapph5.dongfeng-nissan.com.cn/mb-gw/dndc-gateway/community/api/v2/user/followings/${$.user_id}",
-    "body": "",
-    "headers": ["User-Agent: dong feng ri chan/${appversion} (iPhone; iOS 17.0.0; Scale/2.00)",
-      "clientid: nissanapp",
-      "appVersion: ${appversion}",
-      "appCode: nissan",
-      "appSkin: NISSANAPP",
-      "sign: ${sign}",
-      "noncestr: ${noncestr}",
-      "token: ${$.token}",
-      "timestamp: ${timestamp}",
-      "Range: 1",
-      "From-Type: 4",
-      "urid: ${noncestr}"]
-  }`
-  headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36",
-    "Content-Type": "application/json",
-    "Referer": "https://tool.vlwx.com/http/"
-  };
-  const rest = {url, headers, body};
-  var {body} = await httpRequest(rest);
-  let _msg;
-  msg = $.toObj(body).msg
-  _msg = (method === 'put') ? `关注博主：${msg}` : `取消关注：${msg}`
-  pushMsg(_msg);
 }
 
 async function httpRequest(options) {
