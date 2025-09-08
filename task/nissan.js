@@ -62,6 +62,7 @@ async function main() {
   var result = await signIn2();//签到
   if (result !== '0' && result !== '1') {return;}// 签到错误停止运行
 
+  await public_page_browse()
   await new_list();//【此刻-最新】帖子    获取 $.push_id, $.tittle, $.user_id
   if (!$.push_id) {return pushMsg('没有找到帖子id')}//找不到帖子ID就停止
   await sort_view();//浏览帖子
@@ -98,6 +99,17 @@ async function signIn() {
   _msg += `签到：${msg}`;
   pushMsg(_msg);
   return result
+}
+
+// 浏览广场页
+async function public_page_browse() {
+    let _msg = '';
+    url = `/mb-gw/dndc-gateway/community/api/v2/user/browse-task-report`;
+    body = `{"id":"","report_type":"public_page_browse"}`;
+    let {result, msg} = await httpPost(url, body);
+    _msg += `广场：${msg}`;
+    pushMsg(_msg);
+    return result
 }
 
 // 查成长值
