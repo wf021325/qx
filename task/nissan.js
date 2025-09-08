@@ -62,7 +62,7 @@ async function main() {
   var result = await signIn2();//签到
   if (result !== '0' && result !== '1') {return;}// 签到错误停止运行
 
-  await public_page_browse();// 浏览广场
+  await public_page_browse()
   await new_list();//【此刻-最新】帖子    获取 $.push_id, $.tittle, $.user_id
   if (!$.push_id) {return pushMsg('没有找到帖子id')}//找不到帖子ID就停止
   await sort_view();//浏览帖子
