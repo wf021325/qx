@@ -191,7 +191,7 @@ async function comments_del() {
 //关注/取消关注 put/delete
 async function follow(method) {
   url = `/mb-gw/dndc-gateway/community/api/v2/user/followings/${$.user_id}`;
-  let {result, msg} = await httpPost(url, ' ', method);
+  let {result, msg} = await httpPost(url, '', method);
   let _msg;
   _msg = (method == 'PUT') ? `关注博主：${msg}` : `取消关注：${msg}`;
   pushMsg(_msg);
