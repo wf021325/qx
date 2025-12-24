@@ -58,9 +58,8 @@ function csvw(obj) {
             this.refreshToken = obj.token || '';
             this.did = obj.did || '';
             this.deviceid = obj.deviceid || '';
-            const refreshToken = this.refreshToken ? "Bearer " + this.refreshToken : '';
             this.herders = {
-                Authorization: refreshToken,
+                Authorization: "Bearer " + this.refreshToken,
                 "Content-Type": "application/json; charset=utf-8",
                 Did: this.did,
                 deviceId: this.deviceid,
@@ -68,10 +67,10 @@ function csvw(obj) {
             };
         }
 
-        getSignHeaders(Authorization = '', userToken = '0') {
+        getSignHeaders() {
             return {
-                Authorization,
-                "X-COP-accessToken": userToken,
+                Authorization: this.Authorization,
+                "X-COP-accessToken": this.userToken,
                 "Content-Type": "application/json",
                 Did: this.did,
                 deviceId: this.deviceid,
@@ -97,7 +96,7 @@ function csvw(obj) {
             const {code, data, description} = await httpRequest(rest, '获取临时Token ');
             pushMsg(`获取临时Token:${description}`);
             if (code == '000000') {
-                this.Sign_token = data?.tokenType + ' ' + data?.accessToken;
+                this.Authorization = data?.tokenType + ' ' + data?.accessToken;
             }
             return code
         }
@@ -113,19 +112,35 @@ function csvw(obj) {
 
         // 签到
         async sign() {
+            const url = 'https://mweb.mos.csvw.com/mos/operation/home/api/v1/user/sign/info';
             const body = `{"activityId":"MOS_SX_Sign_1001","brand":"VW","idpId":"${this.openId}","userId":"${this.userId}"}`;
-            const headers = this.getSignHeaders(this.Sign_token, this.userToken);
-            const url = 'https://mweb.mos.csvw.com/mos-mweb/app-misc/api/home/api/v1/user/sign/info';
-            const rest = {url, body, headers};
-            const obj = await httpRequest(rest, '签到');
+            const getOptions = () => {
+                const headers = this.getSignHeaders();
+                if (this.acw_sc__v2) {
+                    headers['Cookie'] = `acw_sc__v2=${this.acw_sc__v2}`;
+                }
+                return { url, body, headers };
+            };
+            let obj = await httpRequest(getOptions(), '签到');
             let _msg;
-            _msg = obj?.code == '000000' ? `签到:成功，已签到${obj?.data?.signCount}天` : `❌签到失败:${obj?.description}!`
+            if (typeof obj === 'string' && obj.includes("arg1")) {
+                const match = obj.match(/arg1='([^']*)'/);
+                if (match && match[1]) {
+                    this.acw_sc__v2 = getSignCookie(match[1]); // 计算新 Token
+                    obj = await httpRequest(getOptions(), '签到重试');
+                }
+            }
+            if (obj && typeof obj === 'object' && !Array.isArray(obj)) {
+                _msg = obj?.code == '000000' ? `签到:成功，已签到${obj?.data?.signCount}天` : `❌签到失败:${obj?.description}!`
+            } else {
+                _msg = "❌响应异常: 无法绕过阿里云防火墙";
+            }
             pushMsg(_msg)
         }
 
         // 查积分
         async status() {
-            const headers = this.getSignHeaders(this.Sign_token, this.userToken);
+            const headers = this.getSignHeaders();
             const url = `https://mweb.mos.csvw.com/mos-mweb/app-misc/api/user/api/v1/app/member/social/info/users/${this.userId}`;
             const rest = {url, headers};
             const obj = await httpRequest(rest, '查积分');
@@ -133,7 +148,6 @@ function csvw(obj) {
             obj?.code == '000000' ? _msg = `当前积分:${obj?.data?.pointCount}` : `❌${obj?.data}`
             pushMsg(_msg)
         }
-
     })(obj)
 }
 
@@ -207,7 +221,10 @@ function debug(content, title = "debug") {
     }
 };
 
-function intbase64(){CryptoJS=function(t,n){var r=function(){if(crypto){if("function"==typeof crypto.getRandomValues)try{return crypto.getRandomValues(new Uint32Array(1))[0]}catch(t){}if("function"==typeof crypto.randomBytes)try{return crypto.randomBytes(4).readInt32LE()}catch(t){}}throw new Error("Native crypto module could not be used to get secure random number.")},e=Object.create||function(){function t(){}return function(n){var r;return t.prototype=n,r=new t,t.prototype=null,r}}(),i={},o=i.lib={},s=o.Base={extend:function(t){var n=e(this);return t&&n.mixIn(t),n.hasOwnProperty("init")&&this.init!==n.init||(n.init=function(){n.$super.init.apply(this,arguments)}),n.init.prototype=n,n.$super=this,n},create:function(){var t=this.extend();return t.init.apply(t,arguments),t},init:function(){},mixIn:function(t){for(var n in t)t.hasOwnProperty(n)&&(this[n]=t[n]);t.hasOwnProperty("toString")&&(this.toString=t.toString)},clone:function(){return this.init.prototype.extend(this)}},a=o.WordArray=s.extend({init:function(t,n){t=this.words=t||[],this.sigBytes=null!=n?n:4*t.length},toString:function(t){return(t||u).stringify(this)},concat:function(t){var n=this.words,r=t.words,e=this.sigBytes,i=t.sigBytes;if(this.clamp(),e%4)for(var o=0;o<i;o++){var s=r[o>>>2]>>>24-o%4*8&255;n[e+o>>>2]|=s<<24-(e+o)%4*8}else for(var a=0;a<i;a+=4)n[e+a>>>2]=r[a>>>2];return this.sigBytes+=i,this},clamp:function(){var n=this.words,r=this.sigBytes;n[r>>>2]&=4294967295<<32-r%4*8,n.length=t.ceil(r/4)},clone:function(){var t=s.clone.call(this);return t.words=this.words.slice(0),t},random:function(n){var e,i=[],o=function(n){n=n;var r=987654321,e=4294967295;return function(){var i=((r=36969*(65535&r)+(r>>16)&e)<<16)+(n=18e3*(65535&n)+(n>>16)&e)&e;return i/=4294967296,(i+=.5)*(t.random()>.5?1:-1)}},s=!1;try{r(),s=!0}catch(t){}for(var c,u=0;u<n;u+=4)s?i.push(r()):(c=987654071*(e=o(4294967296*(c||t.random())))(),i.push(4294967296*e()|0));return new a.init(i,n)}}),c=i.enc={},u=c.Hex={stringify:function(t){for(var n=t.words,r=t.sigBytes,e=[],i=0;i<r;i++){var o=n[i>>>2]>>>24-i%4*8&255;e.push((o>>>4).toString(16)),e.push((15&o).toString(16))}return e.join("")},parse:function(t){for(var n=t.length,r=[],e=0;e<n;e+=2)r[e>>>3]|=parseInt(t.substr(e,2),16)<<24-e%8*4;return new a.init(r,n/2)}},f=c.Latin1={stringify:function(t){for(var n=t.words,r=t.sigBytes,e=[],i=0;i<r;i++){var o=n[i>>>2]>>>24-i%4*8&255;e.push(String.fromCharCode(o))}return e.join("")},parse:function(t){for(var n=t.length,r=[],e=0;e<n;e++)r[e>>>2]|=(255&t.charCodeAt(e))<<24-e%4*8;return new a.init(r,n)}},h=c.Utf8={stringify:function(t){try{return decodeURIComponent(escape(f.stringify(t)))}catch(t){throw new Error("Malformed UTF-8 data")}},parse:function(t){return f.parse(unescape(encodeURIComponent(t)))}},p=o.BufferedBlockAlgorithm=s.extend({reset:function(){this._data=new a.init,this._nDataBytes=0},_append:function(t){"string"==typeof t&&(t=h.parse(t)),this._data.concat(t),this._nDataBytes+=t.sigBytes},_process:function(n){var r,e=this._data,i=e.words,o=e.sigBytes,s=this.blockSize,c=o/(4*s),u=(c=n?t.ceil(c):t.max((0|c)-this._minBufferSize,0))*s,f=t.min(4*u,o);if(u){for(var h=0;h<u;h+=s)this._doProcessBlock(i,h);r=i.splice(0,u),e.sigBytes-=f}return new a.init(r,f)},clone:function(){var t=s.clone.call(this);return t._data=this._data.clone(),t},_minBufferSize:0}),d=(o.Hasher=p.extend({cfg:s.extend(),init:function(t){this.cfg=this.cfg.extend(t),this.reset()},reset:function(){p.reset.call(this),this._doReset()},update:function(t){return this._append(t),this._process(),this},finalize:function(t){return t&&this._append(t),this._doFinalize()},blockSize:16,_createHelper:function(t){return function(n,r){return new t.init(r).finalize(n)}},_createHmacHelper:function(t){return function(n,r){return new d.HMAC.init(t,r).finalize(n)}}}),i.algo={});return i}(Math);!function(){var t=CryptoJS,n=t.lib.WordArray;t.enc.Base64={stringify:function(t){var n=t.words,r=t.sigBytes,e=this._map;t.clamp();for(var i=[],o=0;o<r;o+=3)for(var s=(n[o>>>2]>>>24-o%4*8&255)<<16|(n[o+1>>>2]>>>24-(o+1)%4*8&255)<<8|n[o+2>>>2]>>>24-(o+2)%4*8&255,a=0;a<4&&o+.75*a<r;a++)i.push(e.charAt(s>>>6*(3-a)&63));var c=e.charAt(64);if(c)for(;i.length%4;)i.push(c);return i.join("")},parse:function(t){var r=t.length,e=this._map,i=this._reverseMap;if(!i){i=this._reverseMap=[];for(var o=0;o<e.length;o++)i[e.charCodeAt(o)]=o}var s=e.charAt(64);if(s){var a=t.indexOf(s);-1!==a&&(r=a)}return function(t,r,e){for(var i=[],o=0,s=0;s<r;s++)if(s%4){var a=e[t.charCodeAt(s-1)]<<s%4*2,c=e[t.charCodeAt(s)]>>>6-s%4*2;i[o>>>2]|=(a|c)<<24-o%4*8,o++}return n.create(i,o)}(t,r,i)},_map:"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="}}();}
+function getSignCookie(a){'use strict';const b="undefined"==typeof window?globalThis:window;b.Math||(b.Math=Math);const c={navigator:{webdriver:!1,userAgent:"Mozilla/5.0 (iPhone; CPU iPhone OS 11_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E302SVW IOS"},location:{}},d=a=>{const c=Math.floor(1+10*b.Math.random()),d=Math.ceil(a.length/c),e=[];for(let b=0;b<d;b++)for(let f=0;f<c;f++){const c=f*d+b;void 0!==a[c]&&e.push(a[c])}return e},e=a=>{const b=4294967296;let c=1830453227;return()=>(c=(1664525*c+a)%b,c/b)};let f=1606861126;const g=(a,b)=>{let c=b?1606861126:f;for(let d=0;d<a.length;d++)c=15*c+a[d].charCodeAt(0)>>>0;return b||(f=c),c},h="4068256048,2170782473,490712370",i=g(h);let j=a.slice(0,40).split("");Array.prototype.fill=function(){const a=d(this);return this.length=0,this.push(...a),b.Math.random=e(g(h)),this},b.Math.random=e(i),j.fill(48,35,40);let k=(a=>{let c=["0","1","2","3","4","5","6","7","8","9","A","B","C","D","E","F"];for(let d=c.length-1;0<d;d--){const a=Math.floor(b.Math.random()*(d+1));[c[d],c[a]]=[c[a],c[d]]}return a.map(a=>c[parseInt(a,16)]).join("")})(j);const l=[c.navigator,c.navigator.webdriver,c.location,!0,!0];return l.forEach(a=>{let c=Math.floor(128*b.Math.random());(a&&0==c%2||!a&&0!=c%2)&&c++,k+=c.toString(16).padStart(2,"0")}),k=`197d84838-${k.toLowerCase()}`,k}
+
+function intbase64(){CryptoJS=function(b){var g=function(){if(crypto){if("function"==typeof crypto.getRandomValues)try{return crypto.getRandomValues(new Uint32Array(1))[0]}catch(a){}if("function"==typeof crypto.randomBytes)try{return crypto.randomBytes(4).readInt32LE()}catch(a){}}throw new Error("Native crypto module could not be used to get secure random number.")},j=Object.create||function(){function a(){}return function(b){var c;return a.prototype=b,c=new a,a.prototype=null,c}}(),e={},i=e.lib={},k=i.Base={extend:function(a){var b=j(this);return a&&b.mixIn(a),b.hasOwnProperty("init")&&this.init!==b.init||(b.init=function(){b.$super.init.apply(this,arguments)}),b.init.prototype=b,b.$super=this,b},create:function(){var a=this.extend();return a.init.apply(a,arguments),a},init:function(){},mixIn:function(a){for(var b in a)a.hasOwnProperty(b)&&(this[b]=a[b]);a.hasOwnProperty("toString")&&(this.toString=a.toString)},clone:function(){return this.init.prototype.extend(this)}},l=i.WordArray=k.extend({init:function(a,b){a=this.words=a||[],this.sigBytes=null==b?4*a.length:b},toString:function(a){return(a||c).stringify(this)},concat:function(b){var c=this.words,d=b.words,f=this.sigBytes,e=b.sigBytes;if(this.clamp(),f%4)for(var g,h=0;h<e;h++)g=255&d[h>>>2]>>>24-8*(h%4),c[f+h>>>2]|=g<<24-8*((f+h)%4);else for(var i=0;i<e;i+=4)c[f+i>>>2]=d[i>>>2];return this.sigBytes+=e,this},clamp:function(){var a=this.words,c=this.sigBytes;a[c>>>2]&=4294967295<<32-8*(c%4),a.length=b.ceil(c/4)},clone:function(){var a=k.clone.call(this);return a.words=this.words.slice(0),a},random:function(a){var d,f=[],h=function(a){a=a;var c=987654321;return function(){var d=((c=36969*(65535&c)+(c>>16)&4294967295)<<16)+(a=18e3*(65535&a)+(a>>16)&4294967295)&4294967295;return d/=4294967296,(d+=.5)*(.5<b.random()?1:-1)}},i=!1;try{g(),i=!0}catch(a){}for(var j,k=0;k<a;k+=4)i?f.push(g()):(j=987654071*(d=h(4294967296*(j||b.random())))(),f.push(0|4294967296*d()));return new l.init(f,a)}}),a=e.enc={},c=a.Hex={stringify:function(a){for(var b,c=a.words,d=a.sigBytes,f=[],e=0;e<d;e++)b=255&c[e>>>2]>>>24-8*(e%4),f.push((b>>>4).toString(16)),f.push((15&b).toString(16));return f.join("")},parse:function(a){for(var b=a.length,c=[],d=0;d<b;d+=2)c[d>>>3]|=parseInt(a.substr(d,2),16)<<24-4*(d%8);return new l.init(c,b/2)}},m=a.Latin1={stringify:function(a){for(var b,c=a.words,d=a.sigBytes,f=[],e=0;e<d;e++)b=255&c[e>>>2]>>>24-8*(e%4),f.push(String.fromCharCode(b));return f.join("")},parse:function(a){for(var b=a.length,c=[],d=0;d<b;d++)c[d>>>2]|=(255&a.charCodeAt(d))<<24-8*(d%4);return new l.init(c,b)}},f=a.Utf8={stringify:function(a){try{return decodeURIComponent(escape(m.stringify(a)))}catch(a){throw new Error("Malformed UTF-8 data")}},parse:function(a){return m.parse(unescape(encodeURIComponent(a)))}},h=i.BufferedBlockAlgorithm=k.extend({reset:function(){this._data=new l.init,this._nDataBytes=0},_append:function(a){"string"==typeof a&&(a=f.parse(a)),this._data.concat(a),this._nDataBytes+=a.sigBytes},_process:function(a){var d,g=this._data,e=g.words,i=g.sigBytes,j=this.blockSize,k=i/(4*j),m=(k=a?b.ceil(k):b.max((0|k)-this._minBufferSize,0))*j,n=b.min(4*m,i);if(m){for(var f=0;f<m;f+=j)this._doProcessBlock(e,f);d=e.splice(0,m),g.sigBytes-=n}return new l.init(d,n)},clone:function(){var a=k.clone.call(this);return a._data=this._data.clone(),a},_minBufferSize:0}),o=(i.Hasher=h.extend({cfg:k.extend(),init:function(a){this.cfg=this.cfg.extend(a),this.reset()},reset:function(){h.reset.call(this),this._doReset()},update:function(a){return this._append(a),this._process(),this},finalize:function(a){return a&&this._append(a),this._doFinalize()},blockSize:16,_createHelper:function(a){return function(b,c){return new a.init(c).finalize(b)}},_createHmacHelper:function(a){return function(b,c){return new o.HMAC.init(a,c).finalize(b)}}}),e.algo={});return e}(Math),!function(){var a=CryptoJS,b=a.lib.WordArray;a.enc.Base64={stringify:function(b){var d=b.words,f=b.sigBytes,g=this._map;b.clamp();for(var e=[],h=0;h<f;h+=3)for(var i=(255&d[h>>>2]>>>24-8*(h%4))<<16|(255&d[h+1>>>2]>>>24-8*((h+1)%4))<<8|255&d[h+2>>>2]>>>24-8*((h+2)%4),j=0;4>j&&h+.75*j<f;j++)e.push(g.charAt(63&i>>>6*(3-j)));var k=g.charAt(64);if(k)for(;e.length%4;)e.push(k);return e.join("")},parse:function(c){var d=c.length,f=this._map,e=this._reverseMap;if(!e){e=this._reverseMap=[];for(var g=0;g<f.length;g++)e[f.charCodeAt(g)]=g}var h=f.charAt(64);if(h){var j=c.indexOf(h);-1!==j&&(d=j)}return function(d,f,g){for(var e=[],h=0,i=0;i<f;i++)if(i%4){var j=g[d.charCodeAt(i-1)]<<2*(i%4),a=g[d.charCodeAt(i)]>>>6-2*(i%4);e[h>>>2]|=(j|a)<<24-8*(h%4),h++}return b.create(e,h)}(c,d,e)},_map:"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="}}()}
+
 function ObjectKeys2LowerCase(obj){return Object.fromEntries(Object.entries(obj).map(([k,v])=>[k.toLowerCase(),v]))};
 //通知
 async function sendMsg(message){if(!message)return;try{if($.isNode()){try{var notify=require('./sendNotify');}catch(e){var notify=require('./utils/sendNotify');}await notify.sendNotify($.name,message);}else{$.msg($.name,'',message);}}catch(e){$.log(`\n\n-----${$.name}-----\n${message}`);}};
