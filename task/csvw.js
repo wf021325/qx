@@ -15,6 +15,9 @@
 ^https?:\/\/api\.mos\.csvw\.com\/mos\/security\/api\/v1\/app\/at\/actions\/refresh$ url script-request-header https://raw.githubusercontent.com/wf021325/qx/master/task/csvw.js
 # 这是屏蔽旧版APP弹出更新的，开启重写可以使用旧版
 ^https?:\/\/api\.mos\.csvw\.com\/mos\/app-update\/api\/v1\/app\/update$ url reject-dict
+# 禁止上传APP信息
+^https?:\/\/api\.mos\.csvw\.com\/mos\/security\/api\/v1\/mdm\/uploadDevice$ url reject-dict
+^https?:\/\/api\.mos\.csvw\.com\/mos\/security\/api\/v1\/mdm\/updateAccount$ url reject-dict
 
 [task_local]
 1 0 * * * https://raw.githubusercontent.com/wf021325/qx/master/task/csvw.js, tag=上汽大众, enabled=true
@@ -112,8 +115,8 @@ function csvw(obj) {
 
         // 签到
         async sign() {
-            const url = 'https://mweb.mos.csvw.com/mos/operation/home/api/v1/user/sign/info';
-            const body = `{"activityId":"MOS_SX_Sign_1001","brand":"VW","idpId":"${this.openId}","userId":"${this.userId}"}`;
+            const url = 'https://mweb.mos.csvw.com/mos/operation/home/api/v3/user/sign/info';
+            const body = `{"brand":"vw","idpId":"${this.openId}","userId":"${this.userId}"}`;
             const getOptions = () => {
                 const headers = this.getSignHeaders();
                 if (this.acw_sc__v2) {
