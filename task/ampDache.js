@@ -2,6 +2,7 @@
 高德打车签到
 自动签到 地图APP/微信小程序、支付宝小程序
 2024-06-27 重写代码
+2026-01-03 例行更新
 
 测试 Quantumult-X, loon, Shadowsrocket, Surge(超时写长点例如200), node, 其他自测
 获取Cookie方法 ，QX开重写，进入【高德地图/微信/支付宝 小程序[高德打车]，打车，福利中心】，任意一端获取成功即可3端签到
@@ -37,9 +38,9 @@ $.messages = [];
 async function main() {
     intRSA(), intCryptoJS();
     const list = [
-        {"name": "微信端", "node": "wechatMP", "channel": "h5_common", "actID": "53A31cHhhPJ", "playID": "53A3fQm9AM7"},
-        {"name": "APP端", "node": "Amap", "channel": "h5_common", "actID": "5meYb12hBo9", "playID": "5meYb1k5sLh"},
-        {"name": "支付宝", "node": "alipayMini", "channel": "alipay_mini", "actID": "53wHnt77TQ5", "playID": "53wHtx24q7u"}
+        //{"name": "微信端", "node": "wechatMP", "channel": "h5_common", "actID": "53A31cHhhPJ", "playID": "53A3fQm9AM7"},
+        {"name": "APP端", "node": "Amap", "channel": "amap", "actID": "5DRBxfzndQq", "playID": "5DRBxfFiaXN"}//,
+        //{"name": "支付宝", "node": "alipayMini", "channel": "alipay_mini", "actID": "53wHnt77TQ5", "playID": "53wHtx24q7u"}
     ];
     for (const index of list) {
         if (await checkIn(index)) {
@@ -62,8 +63,8 @@ function getReq(l) {
     const url = l.url + getQuery(l);
     let body = {
         ...l.addbody,
-        "bizVersion": "060800",//040206-060800
-        "h5version": "6.80.17",//7.40.4-6.80.17
+        "bizVersion": "080700",//040206-060800
+        "h5version": "8.87.10",//7.40.4-6.80.17
         "platform": "ios",
         "tid": $.adiu,
         "eId": "",
